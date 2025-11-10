@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Google Login + Supabase',
+      title: 'KulaidoVerse',
       debugShowCheckedModeBanner: false,
       home: const AuthGate(),
     );

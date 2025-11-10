@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'color_camera_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,7 +16,21 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             // 🔹 Top Bar
-            Padding(
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.white, // or your preferred color
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    offset: Offset(0, 2),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,6 +119,14 @@ class HomeScreen extends StatelessWidget {
                     _buildDashboardCard(
                       icon: Icons.camera_alt_outlined,
                       label: 'Color Camera',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ColorCameraScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardCard(
                       icon: Icons.menu_book_outlined,
@@ -127,14 +150,18 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardCard({required IconData icon, required String label}) {
+  Widget _buildDashboardCard({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap, // 🔹 Added this
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2C),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             offset: const Offset(2, 2),
             blurRadius: 4,
           ),
@@ -142,9 +169,7 @@ class HomeScreen extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          // TODO: Navigate to feature page
-        },
+        onTap: onTap, // 🔹 Changed this line
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
