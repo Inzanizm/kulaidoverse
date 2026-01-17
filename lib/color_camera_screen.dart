@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
 class ColorCameraScreen extends StatefulWidget {
   const ColorCameraScreen({super.key});
@@ -15,6 +16,8 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   bool _isReady = false;
   bool _processingFrame = false;
   bool _isSwitching = false;
+  bool _isFrozen = false;
+  Uint8List? _frozenFrame;
   Timer? _throttleTimer;
 
   // Live values
@@ -65,20 +68,10 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     {'name': 'Chartreuse', 'r': 127, 'g': 255, 'b': 0},
   ];
 
-  /// Precomputed LAB palette (fast lookup)
-  late final List<Map<String, dynamic>> _namedColorsLab;
-
   @override
   void initState() {
     super.initState();
     _initializeCamera();
-
-    // Precompute LAB values once
-    _namedColorsLab =
-        _namedColors.map((c) {
-          final lab = _rgbToLab(c['r'], c['g'], c['b']);
-          return {'name': c['name'], 'l': lab[0], 'a': lab[1], 'b': lab[2]};
-        }).toList();
   }
 
   @override
@@ -110,6 +103,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   }
 
   void _processCameraImage(CameraImage image) {
+    if (_isFrozen) return; // ⬅️ FREEZE HERE
     if (_processingFrame) return;
     if (_throttleTimer?.isActive ?? false) return;
 
@@ -199,36 +193,6 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     }
   }
 
-  /// -------- LAB COLOR MATCHING --------
-
-  List<double> _rgbToHsl(int r, int g, int b) {
-    double rf = r / 255.0;
-    double gf = g / 255.0;
-    double bf = b / 255.0;
-
-    double maxVal = max(rf, max(gf, bf));
-    double minVal = min(rf, min(gf, bf));
-    double delta = maxVal - minVal;
-
-    double h = 0.0;
-    if (delta != 0) {
-      if (maxVal == rf) {
-        h = 60 * (((gf - bf) / delta) % 6);
-      } else if (maxVal == gf) {
-        h = 60 * (((bf - rf) / delta) + 2);
-      } else {
-        h = 60 * (((rf - gf) / delta) + 4);
-      }
-    }
-    if (h < 0) h += 360;
-
-    double l = (maxVal + minVal) / 2;
-
-    double s = (delta == 0) ? 0 : delta / (1 - (2 * l - 1).abs());
-
-    return [h, s, l]; // H in degrees, S and L are 0–1
-  }
-
   String _nearestColorName(int r, int g, int b) {
     // Normalize
     final rf = r / 255.0;
@@ -279,32 +243,6 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
 
     return nearest;
   }
-
-  List<double> _rgbToLab(int r, int g, int b) {
-    double rf = _pivotRgb(r / 255);
-    double gf = _pivotRgb(g / 255);
-    double bf = _pivotRgb(b / 255);
-
-    double x = rf * 0.4124 + gf * 0.3576 + bf * 0.1805;
-    double y = rf * 0.2126 + gf * 0.7152 + bf * 0.0722;
-    double z = rf * 0.0193 + gf * 0.1192 + bf * 0.9505;
-
-    x /= 0.95047;
-    y /= 1.00000;
-    z /= 1.08883;
-
-    x = _pivotXyz(x);
-    y = _pivotXyz(y);
-    z = _pivotXyz(z);
-
-    return [max(0, 116 * y - 16), 500 * (x - y), 200 * (y - z)];
-  }
-
-  double _pivotRgb(double n) =>
-      n > 0.04045 ? pow((n + 0.055) / 1.055, 2.4).toDouble() : n / 12.92;
-
-  double _pivotXyz(double n) =>
-      n > 0.008856 ? pow(n, 1 / 3).toDouble() : (7.787 * n) + 16 / 116;
 
   /// -------- UTILITIES --------
 
@@ -393,6 +331,12 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                 ),
               )
               : Container(color: Colors.black), // <── black screen fallback
+          // 2️⃣ Frozen frame overlay (on top of live preview)
+          if (_isFrozen && _frozenFrame != null)
+            Positioned.fill(
+              child: Image.memory(_frozenFrame!, fit: BoxFit.cover),
+            ),
+
           // Crosshair overlay
           Center(
             child: CustomPaint(
@@ -518,9 +462,36 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                           border: Border.all(width: 4, color: Colors.white),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.camera_alt, size: 35),
+                          icon: Icon(
+                            _isFrozen
+                                ? Icons.play_arrow_rounded
+                                : Icons.stop_rounded,
+                            size: 35,
+                          ),
                           color: Colors.white,
-                          onPressed: () {},
+                          onPressed: () async {
+                            if (_controller == null ||
+                                !_controller!.value.isInitialized) {
+                              return;
+                            }
+
+                            if (!_isFrozen) {
+                              // Capture one frame
+                              final image = await _controller!.takePicture();
+                              final bytes = await image.readAsBytes();
+
+                              setState(() {
+                                _frozenFrame = bytes;
+                                _isFrozen = true;
+                              });
+                            } else {
+                              // Unfreeze
+                              setState(() {
+                                _frozenFrame = null;
+                                _isFrozen = false;
+                              });
+                            }
+                          },
                         ),
                       ),
 
@@ -530,7 +501,8 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                           Icons.cameraswitch,
                           color: Colors.white,
                         ),
-                        onPressed: _isSwitching ? null : _switchCamera,
+                        onPressed:
+                            (_isSwitching || _isFrozen) ? null : _switchCamera,
                       ),
                     ],
                   ),
