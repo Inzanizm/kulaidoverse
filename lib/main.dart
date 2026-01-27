@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/auth_gate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/services.dart';
 
 final supabase = Supabase.instance.client;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   await Supabase.initialize(
     url: 'https://qjuhbmhbbbrwuynipzpi.supabase.co',

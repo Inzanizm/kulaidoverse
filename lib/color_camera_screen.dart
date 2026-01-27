@@ -4,6 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
+import 'package:kulaidoverse/color_info_screen.dart';
+
 class ColorCameraScreen extends StatefulWidget {
   const ColorCameraScreen({super.key});
 
@@ -313,29 +315,51 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     return [ri, gi, bi];
   }
 
+  Widget _cameraView() {
+    final size = _controller!.value.previewSize!;
+    final isFront =
+        _controller!.description.lensDirection == CameraLensDirection.front;
+
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: size.height,
+          height: size.width,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // LIVE CAMERA
+              CameraPreview(_controller!),
+
+              // FROZEN FRAME (perfect overlay)
+              if (_isFrozen && _frozenFrame != null)
+                Transform(
+                  alignment: Alignment.center,
+                  transform:
+                      isFront
+                          ? (Matrix4.identity()..scale(-1.0, 1.0, 1.0))
+                          : Matrix4.identity(),
+
+                  child: Image.memory(_frozenFrame!, fit: BoxFit.cover),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          _isReady && _controller != null
-              ? Center(
-                child: FittedBox(
-                  fit: BoxFit.cover, // fills the screen without stretching
-                  child: SizedBox(
-                    width: _controller!.value.previewSize!.height,
-                    height: _controller!.value.previewSize!.width,
-                    child: CameraPreview(_controller!),
-                  ),
-                ),
-              )
-              : Container(color: Colors.black), // <── black screen fallback
-          // 2️⃣ Frozen frame overlay (on top of live preview)
-          if (_isFrozen && _frozenFrame != null)
-            Positioned.fill(
-              child: Image.memory(_frozenFrame!, fit: BoxFit.cover),
-            ),
+          if (_isReady && _controller != null)
+            _cameraView()
+          else
+            Container(color: Colors.black),
 
           // Crosshair overlay
           Center(
@@ -450,7 +474,21 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                         iconSize: 40,
                         color: Colors.white,
                         icon: const Icon(Icons.info_outline),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => ColorInfoScreen(
+                                    color: _currentColor,
+                                    hex: _hex,
+                                    rgb: _rgb,
+                                    cmyk: _cmyk,
+                                    name: _colorName,
+                                  ),
+                            ),
+                          );
+                        },
                       ),
 
                       // Capture button (big)
