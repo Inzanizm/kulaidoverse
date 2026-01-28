@@ -3,8 +3,108 @@ import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
-
 import 'package:kulaidoverse/color_info_screen.dart';
+
+enum CameraMode { colorPicker, colorBlindSimulation, colorFilter }
+
+enum ColorBlindType { normal, protanopia, deuteranopia, tritanopia }
+
+const Map<ColorBlindType, List<double>> colorBlindMatrices = {
+  ColorBlindType.normal: [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // 🔴 Protanopia (red-blind)
+  ColorBlindType.protanopia: [
+    0.567,
+    0.433,
+    0.000,
+    0,
+    0,
+    0.558,
+    0.442,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.242,
+    0.758,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // 🟢 Deuteranopia (green-blind)
+  ColorBlindType.deuteranopia: [
+    0.625,
+    0.375,
+    0.000,
+    0,
+    0,
+    0.700,
+    0.300,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.300,
+    0.700,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // 🔵 Tritanopia (blue-blind)
+  ColorBlindType.tritanopia: [
+    0.950,
+    0.050,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.433,
+    0.567,
+    0,
+    0,
+    0.000,
+    0.475,
+    0.525,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+};
 
 class ColorCameraScreen extends StatefulWidget {
   const ColorCameraScreen({super.key});
@@ -28,6 +128,20 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   String _hex = '#FFFFFF';
   String _rgb = '(255, 255, 255)';
   String _cmyk = '(0, 0, 0, 0)';
+
+  CameraMode _currentMode = CameraMode.colorPicker;
+  ColorBlindType _colorBlindType = ColorBlindType.normal;
+
+  String get _modeLabel {
+    switch (_currentMode) {
+      case CameraMode.colorPicker:
+        return 'Color Picker';
+      case CameraMode.colorBlindSimulation:
+        return 'Colorblind Simulation';
+      case CameraMode.colorFilter:
+        return 'Color Filter';
+    }
+  }
 
   /// Base named color palette
   final List<Map<String, dynamic>> _namedColors = [
@@ -350,6 +464,176 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     );
   }
 
+  PopupMenuItem<CameraMode> _modeItem(CameraMode mode, String label) {
+    final bool selected = _currentMode == mode;
+
+    return PopupMenuItem<CameraMode>(
+      value: mode,
+      child: Row(
+        children: [
+          Icon(
+            selected ? Icons.check : null,
+            color: selected ? Colors.greenAccent : Colors.transparent,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.greenAccent : Colors.white,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomControls() {
+    switch (_currentMode) {
+      case CameraMode.colorPicker:
+        return _colorPickerControls();
+
+      case CameraMode.colorBlindSimulation:
+        return _colorBlindControls();
+
+      case CameraMode.colorFilter:
+        return _colorFilterControls();
+    }
+  }
+
+  Widget _colorPickerControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IconButton(
+          iconSize: 40,
+          color: Colors.white,
+          icon: const Icon(Icons.info_outline),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => ColorInfoScreen(
+                      color: _currentColor,
+                      hex: _hex,
+                      rgb: _rgb,
+                      cmyk: _cmyk,
+                      name: _colorName,
+                    ),
+              ),
+            );
+          },
+        ),
+
+        // Freeze / Unfreeze
+        Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(width: 4, color: Colors.white),
+          ),
+          child: IconButton(
+            icon: Icon(
+              _isFrozen ? Icons.play_arrow_rounded : Icons.stop_rounded,
+              size: 35,
+            ),
+            color: Colors.white,
+            onPressed: () {
+              setState(() {
+                _isFrozen = !_isFrozen;
+              });
+            },
+          ),
+        ),
+
+        IconButton(
+          icon: const Icon(Icons.cameraswitch, color: Colors.white),
+          onPressed: (_isSwitching || _isFrozen) ? null : _switchCamera,
+        ),
+      ],
+    );
+  }
+
+  Widget _colorBlindControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Dropdown
+        Expanded(
+          child: PopupMenuButton<ColorBlindType>(
+            color: const Color(0xFF222222),
+            initialValue: _colorBlindType,
+            onSelected: (type) {
+              setState(() {
+                _colorBlindType = type;
+              });
+            },
+            itemBuilder:
+                (context) =>
+                    ColorBlindType.values.map((type) {
+                      final selected = type == _colorBlindType;
+                      return PopupMenuItem(
+                        value: type,
+                        child: Text(
+                          type.name.toUpperCase(),
+                          style: TextStyle(
+                            color: selected ? Colors.greenAccent : Colors.white,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white54),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _colorBlindType.name.toUpperCase(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 24),
+
+        IconButton(
+          icon: const Icon(Icons.cameraswitch, color: Colors.white),
+          onPressed: _isSwitching ? null : _switchCamera,
+        ),
+      ],
+    );
+  }
+
+  Widget _colorFilterControls() {
+    return const Center(
+      child: Text('Color Filter Mode', style: TextStyle(color: Colors.white54)),
+    );
+  }
+
+  Widget _cameraWithFilters() {
+    Widget camera = _cameraView();
+
+    if (_currentMode == CameraMode.colorBlindSimulation) {
+      return ColorFiltered(
+        colorFilter: ColorFilter.matrix(colorBlindMatrices[_colorBlindType]!),
+        child: camera,
+      );
+    }
+
+    return camera;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -357,17 +641,19 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       body: Stack(
         children: [
           if (_isReady && _controller != null)
-            _cameraView()
+            _cameraWithFilters()
           else
             Container(color: Colors.black),
 
           // Crosshair overlay
-          Center(
-            child: CustomPaint(
-              painter: _CrosshairPainter(),
-              child: SizedBox(width: 240, height: 240),
+          if (_currentMode == CameraMode.colorPicker)
+            Center(
+              child: CustomPaint(
+                painter: _CrosshairPainter(),
+                child: const SizedBox(width: 240, height: 240),
+              ),
             ),
-          ),
+
           // Top controls
           SafeArea(
             child: Padding(
@@ -375,15 +661,53 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // ⬅ Back button
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.flash_on, color: Colors.white),
-                    onPressed: () {
-                      // optionally toggle flash using controller.setFlashMode(...)
+
+                  // 🎛 Mode dropdown
+                  PopupMenuButton<CameraMode>(
+                    color: const Color(0xFF222222),
+                    initialValue: _currentMode,
+                    onSelected: (mode) {
+                      setState(() {
+                        _currentMode = mode;
+                      });
                     },
+                    itemBuilder:
+                        (context) => [
+                          _modeItem(CameraMode.colorPicker, 'Color Picker'),
+                          _modeItem(
+                            CameraMode.colorBlindSimulation,
+                            'Colorblind Simulation',
+                          ),
+                          _modeItem(CameraMode.colorFilter, 'Color Filter'),
+                        ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white54),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            _modeLabel,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -399,54 +723,52 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                 // ───────────────────────────────
                 // TOP PANEL — Color Info (transparent, NO rounded corners)
                 // ───────────────────────────────
-                Container(
-                  width: double.infinity,
-                  height: 160,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.85),
-                  ),
-                  child: Row(
-                    children: [
-                      // Color swatch
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: _currentColor,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black12),
+                if (_currentMode == CameraMode.colorPicker)
+                  Container(
+                    width: double.infinity,
+                    height: 160,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                    child: Row(
+                      children: [
+                        // Color swatch
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: _currentColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.black12),
+                          ),
                         ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // Color Info
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _colorName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _colorName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text("HEX: $_hex"),
-                            Text("RGB: $_rgb"),
-                            Text("CMYK: $_cmyk"),
-                          ],
+                              const SizedBox(height: 6),
+                              Text("HEX: $_hex"),
+                              Text("RGB: $_rgb"),
+                              Text("CMYK: $_cmyk"),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
                 // ───────────────────────────────
                 // BOTTOM PANEL — Camera Buttons
@@ -466,84 +788,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                       topRight: Radius.circular(18),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Info button
-                      IconButton(
-                        iconSize: 40,
-                        color: Colors.white,
-                        icon: const Icon(Icons.info_outline),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => ColorInfoScreen(
-                                    color: _currentColor,
-                                    hex: _hex,
-                                    rgb: _rgb,
-                                    cmyk: _cmyk,
-                                    name: _colorName,
-                                  ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Capture button (big)
-                      Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(width: 4, color: Colors.white),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            _isFrozen
-                                ? Icons.play_arrow_rounded
-                                : Icons.stop_rounded,
-                            size: 35,
-                          ),
-                          color: Colors.white,
-                          onPressed: () async {
-                            if (_controller == null ||
-                                !_controller!.value.isInitialized) {
-                              return;
-                            }
-
-                            if (!_isFrozen) {
-                              // Capture one frame
-                              final image = await _controller!.takePicture();
-                              final bytes = await image.readAsBytes();
-
-                              setState(() {
-                                _frozenFrame = bytes;
-                                _isFrozen = true;
-                              });
-                            } else {
-                              // Unfreeze
-                              setState(() {
-                                _frozenFrame = null;
-                                _isFrozen = false;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      // Switch camera (front ↔ back)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.cameraswitch,
-                          color: Colors.white,
-                        ),
-                        onPressed:
-                            (_isSwitching || _isFrozen) ? null : _switchCamera,
-                      ),
-                    ],
-                  ),
+                  child: _buildBottomControls(),
                 ),
               ],
             ),
