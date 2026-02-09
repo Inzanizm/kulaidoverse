@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/games/games_screen.dart';
+import 'package:kulaidoverse/learning/kulaiticle.dart';
+import 'package:kulaidoverse/testing/testing_screen.dart';
 import 'color_camera_screen.dart';
 import 'settings_screen.dart';
 
@@ -131,14 +134,36 @@ class HomeScreen extends StatelessWidget {
                     _buildDashboardCard(
                       icon: Icons.menu_book_outlined,
                       label: 'Learning',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const Kulaiticle()),
+                        );
+                      },
                     ),
                     _buildDashboardCard(
                       icon: Icons.videogame_asset_outlined,
                       label: 'Games',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const GamesScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardCard(
                       icon: Icons.checklist_rtl_outlined,
                       label: 'Testing',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TestingScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
