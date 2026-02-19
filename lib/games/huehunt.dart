@@ -280,7 +280,7 @@ class _HuehuntState extends State<Huehunt> {
                               ? null
                               : Center(
                                 child: Image.asset(
-                                  'images/LogoKly.png',
+                                  'assets/logo/LogoKly.png',
                                   width: 24,
                                 ),
                               ),

@@ -4,10 +4,23 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:kulaidoverse/color_info_screen.dart';
+import 'dart:ui' as ui;
 
 enum CameraMode { colorPicker, colorBlindSimulation, colorFilter }
 
-enum ColorBlindType { normal, protanopia, deuteranopia, tritanopia }
+enum ColorBlindType {
+  normal,
+  protanopia,
+  protanomaly,
+  deuteranopia,
+  deuteranomaly,
+  tritanopia,
+  tritanomaly,
+  achromatopsia,
+  achromatomaly,
+}
+
+enum FilterColor { red, orange, yellow, green, cyan, blue, purple, pink, brown }
 
 const Map<ColorBlindType, List<double>> colorBlindMatrices = {
   ColorBlindType.normal: [
@@ -33,7 +46,7 @@ const Map<ColorBlindType, List<double>> colorBlindMatrices = {
     0,
   ],
 
-  // 🔴 Protanopia (red-blind)
+  // 🔴 Protanopia (Red-Blind)
   ColorBlindType.protanopia: [
     0.567,
     0.433,
@@ -57,7 +70,31 @@ const Map<ColorBlindType, List<double>> colorBlindMatrices = {
     0,
   ],
 
-  // 🟢 Deuteranopia (green-blind)
+  // 🔴 Protanomaly (Red-Weak)
+  ColorBlindType.protanomaly: [
+    0.817,
+    0.183,
+    0.000,
+    0,
+    0,
+    0.333,
+    0.667,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.125,
+    0.875,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // 🟢 Deuteranopia (Green-Blind)
   ColorBlindType.deuteranopia: [
     0.625,
     0.375,
@@ -81,7 +118,31 @@ const Map<ColorBlindType, List<double>> colorBlindMatrices = {
     0,
   ],
 
-  // 🔵 Tritanopia (blue-blind)
+  // 🟢 Deuteranomaly (Green-Weak)
+  ColorBlindType.deuteranomaly: [
+    0.800,
+    0.200,
+    0.000,
+    0,
+    0,
+    0.258,
+    0.742,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.142,
+    0.858,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // 🔵 Tritanopia (Blue-Blind)
   ColorBlindType.tritanopia: [
     0.950,
     0.050,
@@ -104,6 +165,157 @@ const Map<ColorBlindType, List<double>> colorBlindMatrices = {
     1,
     0,
   ],
+
+  // 🔵 Tritanomaly (Blue-Weak)
+  ColorBlindType.tritanomaly: [
+    0.967,
+    0.033,
+    0.000,
+    0,
+    0,
+    0.000,
+    0.733,
+    0.267,
+    0,
+    0,
+    0.000,
+    0.183,
+    0.817,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // ⚫ Achromatopsia (Total Color Blind)
+  ColorBlindType.achromatopsia: [
+    0.299,
+    0.587,
+    0.114,
+    0,
+    0,
+    0.299,
+    0.587,
+    0.114,
+    0,
+    0,
+    0.299,
+    0.587,
+    0.114,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+
+  // ⚫ Achromatomaly (Blue Cone Monochromacy)
+  ColorBlindType.achromatomaly: [
+    0.618,
+    0.320,
+    0.062,
+    0,
+    0,
+    0.163,
+    0.775,
+    0.062,
+    0,
+    0,
+    0.163,
+    0.320,
+    0.516,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ],
+};
+
+// Color filter reference values in HSV
+const Map<FilterColor, Map<String, dynamic>> filterColorData = {
+  FilterColor.red: {
+    'name': 'Red',
+    'hueRanges': [
+      [0, 20],
+      [340, 360],
+    ], // red wraps around
+    'satMin': 0.3,
+    'valMin': 0.2,
+  },
+  FilterColor.orange: {
+    'name': 'Orange',
+    'hueRanges': [
+      [15, 45],
+    ],
+    'satMin': 0.3,
+    'valMin': 0.2,
+  },
+  FilterColor.yellow: {
+    'name': 'Yellow',
+    'hueRanges': [
+      [45, 75],
+    ],
+    'satMin': 0.3,
+    'valMin': 0.3,
+  },
+  FilterColor.green: {
+    'name': 'Green',
+    'hueRanges': [
+      [75, 165],
+    ],
+    'satMin': 0.25,
+    'valMin': 0.2,
+  },
+  FilterColor.cyan: {
+    'name': 'Cyan',
+    'hueRanges': [
+      [165, 200],
+    ],
+    'satMin': 0.25,
+    'valMin': 0.2,
+  },
+  FilterColor.blue: {
+    'name': 'Blue',
+    'hueRanges': [
+      [200, 260],
+    ],
+    'satMin': 0.3,
+    'valMin': 0.2,
+  },
+  FilterColor.purple: {
+    'name': 'Purple',
+    'hueRanges': [
+      [260, 300],
+    ],
+    'satMin': 0.25,
+    'valMin': 0.2,
+  },
+  FilterColor.pink: {
+    'name': 'Pink',
+    'hueRanges': [
+      [300, 340],
+    ],
+    'satMin': 0.25,
+    'valMin': 0.3,
+  },
+  FilterColor.brown: {
+    'name': 'Brown',
+    'hueRanges': [
+      [15, 35],
+    ],
+    'satMin': 0.3,
+    'satMax': 0.8,
+    'valMin': 0.2,
+    'valMax': 0.6,
+  },
 };
 
 class ColorCameraScreen extends StatefulWidget {
@@ -131,6 +343,13 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
 
   CameraMode _currentMode = CameraMode.colorPicker;
   ColorBlindType _colorBlindType = ColorBlindType.normal;
+  FilterColor _selectedFilterColor = FilterColor.red;
+  FlashMode _flashMode = FlashMode.off;
+
+  // For color filter mode
+  ui.Image? _filteredImage;
+  Timer? _filterTimer;
+  bool _processingFilter = false;
 
   String get _modeLabel {
     switch (_currentMode) {
@@ -193,7 +412,9 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   @override
   void dispose() {
     _throttleTimer?.cancel();
+    _filterTimer?.cancel();
     _controller?.dispose();
+    _filteredImage?.dispose();
     super.dispose();
   }
 
@@ -219,30 +440,233 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   }
 
   void _processCameraImage(CameraImage image) {
-    if (_isFrozen) return; // ⬅️ FREEZE HERE
-    if (_processingFrame) return;
-    if (_throttleTimer?.isActive ?? false) return;
+    // Color picker mode - just get center pixel
+    if (_currentMode == CameraMode.colorPicker) {
+      if (_isFrozen) return;
+      if (_processingFrame) return;
+      if (_throttleTimer?.isActive ?? false) return;
 
-    _throttleTimer = Timer(const Duration(milliseconds: 200), () {});
-    _processingFrame = true;
+      _throttleTimer = Timer(const Duration(milliseconds: 200), () {});
+      _processingFrame = true;
 
-    try {
-      final rgb = _getCenterPixelColorFromImage(image);
-      if (rgb == null) return;
+      try {
+        final rgb = _getCenterPixelColorFromImage(image);
+        if (rgb == null) return;
 
-      final r = rgb[0], g = rgb[1], b = rgb[2];
-      final name = _nearestColorName(r, g, b);
+        final r = rgb[0], g = rgb[1], b = rgb[2];
+        final name = _nearestColorName(r, g, b);
 
-      setState(() {
-        _currentColor = Color.fromARGB(255, r, g, b);
-        _hex = _rgbToHex(r, g, b);
-        _rgb = '($r, $g, $b)';
-        _cmyk = _rgbToCmyk(r, g, b).map((v) => v.toStringAsFixed(0)).join(', ');
-        _colorName = name;
-      });
-    } finally {
-      _processingFrame = false;
+        setState(() {
+          _currentColor = Color.fromARGB(255, r, g, b);
+          _hex = _rgbToHex(r, g, b);
+          _rgb = '($r, $g, $b)';
+          _cmyk = _rgbToCmyk(
+            r,
+            g,
+            b,
+          ).map((v) => v.toStringAsFixed(0)).join(', ');
+          _colorName = name;
+        });
+      } finally {
+        _processingFrame = false;
+      }
     }
+    // Color filter mode - process entire frame
+    else if (_currentMode == CameraMode.colorFilter) {
+      if (_processingFilter) return;
+      if (_filterTimer?.isActive ?? false) return;
+
+      _filterTimer = Timer(const Duration(milliseconds: 180), () {});
+
+      _processingFilter = true;
+
+      _processColorFilterFrame(image);
+    }
+  }
+
+  Future<void> _processColorFilterFrame(CameraImage image) async {
+    try {
+      // Convert YUV to RGB and apply color filter
+      final rgbaBytes = await _convertYUVtoRGBwithFilter(image);
+      if (rgbaBytes == null) return;
+
+      // Create image from raw RGBA bytes
+      final completer = Completer<ui.Image>();
+      final outWidth = image.width ~/ 3;
+      final outHeight = image.height ~/ 3;
+
+      ui.decodeImageFromPixels(
+        rgbaBytes,
+        outWidth,
+        outHeight,
+
+        ui.PixelFormat.rgba8888,
+        (ui.Image img) {
+          completer.complete(img);
+        },
+      );
+
+      ui.Image img = await completer.future;
+
+      final filteredImg = img;
+
+      if (mounted) {
+        setState(() {
+          _filteredImage?.dispose();
+          _filteredImage = filteredImg;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error processing filter frame: $e');
+    } finally {
+      _processingFilter = false;
+    }
+  }
+
+  Future<Uint8List?> _convertYUVtoRGBwithFilter(
+    CameraImage image, {
+    int step = 3, // <-- ADD THIS
+  }) async {
+    if (image.format.group != ImageFormatGroup.yuv420) return null;
+
+    final width = image.width;
+    final height = image.height;
+
+    final planeY = image.planes[0];
+    final planeU = image.planes[1];
+    final planeV = image.planes[2];
+
+    final yRowStride = planeY.bytesPerRow;
+    final uvRowStride = planeU.bytesPerRow;
+    final uvPixelStride = planeU.bytesPerPixel ?? 1;
+
+    // Create RGBA output
+    final outWidth = width ~/ step;
+    final outHeight = height ~/ step;
+    final rgbaBytes = Uint8List(outWidth * outHeight * 4);
+
+    for (int y = 0; y < height; y += step) {
+      final outY = y ~/ step;
+
+      for (int x = 0; x < width; x += step) {
+        final outX = x ~/ step;
+
+        final yIndex = y * yRowStride + x;
+        final uvIndex = (y ~/ 2) * uvRowStride + (x ~/ 2) * uvPixelStride;
+
+        if (yIndex >= planeY.bytes.length ||
+            uvIndex >= planeU.bytes.length ||
+            uvIndex >= planeV.bytes.length) {
+          continue;
+        }
+
+        final yValue = planeY.bytes[yIndex];
+        final uValue = planeU.bytes[uvIndex];
+        final vValue = planeV.bytes[uvIndex];
+
+        // YUV to RGB conversion
+        final yf = yValue & 0xff;
+        final uf = uValue & 0xff;
+        final vf = vValue & 0xff;
+
+        double r = yf + 1.370705 * (vf - 128);
+        double g = yf - 0.337633 * (uf - 128) - 0.698001 * (vf - 128);
+        double b = yf + 1.732446 * (uf - 128);
+
+        int ri = r.round().clamp(0, 255);
+        int gi = g.round().clamp(0, 255);
+        int bi = b.round().clamp(0, 255);
+
+        // Check if this pixel matches the selected color
+        final matches = _isColorMatch(ri, gi, bi, _selectedFilterColor);
+
+        final pixelIndex = (outY * outWidth + outX) * 4;
+
+        if (matches) {
+          // Keep original color
+          rgbaBytes[pixelIndex] = ri;
+          rgbaBytes[pixelIndex + 1] = gi;
+          rgbaBytes[pixelIndex + 2] = bi;
+          rgbaBytes[pixelIndex + 3] = 255;
+        } else {
+          // Convert to grayscale
+          final gray = (0.299 * ri + 0.587 * gi + 0.114 * bi).round();
+          rgbaBytes[pixelIndex] = gray;
+          rgbaBytes[pixelIndex + 1] = gray;
+          rgbaBytes[pixelIndex + 2] = gray;
+          rgbaBytes[pixelIndex + 3] = 255;
+        }
+      }
+    }
+
+    return rgbaBytes;
+  }
+
+  bool _isColorMatch(int r, int g, int b, FilterColor filterColor) {
+    final colorData = filterColorData[filterColor]!;
+
+    // Convert RGB to HSV
+    final hsv = _rgbToHsv(r, g, b);
+    final h = hsv[0]; // 0-360
+    final s = hsv[1]; // 0-1
+    final v = hsv[2]; // 0-1
+
+    // Check saturation and value constraints
+    final satMin = colorData['satMin'] ?? 0.0;
+    final valMin = colorData['valMin'] ?? 0.0;
+
+    if (s < satMin || v < valMin) {
+      return false;
+    }
+
+    // Special handling for brown (has satMax and valMax)
+    if (filterColor == FilterColor.brown) {
+      final satMax = colorData['satMax'] ?? 1.0;
+      final valMax = colorData['valMax'] ?? 1.0;
+      if (s > satMax || v > valMax) {
+        return false;
+      }
+    }
+
+    // Check hue ranges
+    final hueRanges = colorData['hueRanges'] as List;
+    for (final range in hueRanges) {
+      final hueMin = range[0];
+      final hueMax = range[1];
+      if (h >= hueMin && h <= hueMax) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  List<double> _rgbToHsv(int r, int g, int b) {
+    double rf = r / 255.0;
+    double gf = g / 255.0;
+    double bf = b / 255.0;
+
+    double max = [rf, gf, bf].reduce((a, b) => a > b ? a : b);
+    double min = [rf, gf, bf].reduce((a, b) => a < b ? a : b);
+    double delta = max - min;
+
+    double h = 0;
+    double s = max == 0 ? 0 : delta / max;
+    double v = max;
+
+    if (delta != 0) {
+      if (max == rf) {
+        h = 60 * (((gf - bf) / delta) % 6);
+      } else if (max == gf) {
+        h = 60 * (((bf - rf) / delta) + 2);
+      } else {
+        h = 60 * (((rf - gf) / delta) + 4);
+      }
+    }
+
+    if (h < 0) h += 360;
+
+    return [h, s, v];
   }
 
   Future<void> _switchCamera() async {
@@ -281,7 +705,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
 
       // Dispose old controller
       final old = _controller;
-      _controller = null; // prevents preview rebuild on disposed controller
+      _controller = null;
       setState(() {});
 
       await old?.dispose();
@@ -430,37 +854,84 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   }
 
   Widget _cameraView() {
-    final size = _controller!.value.previewSize!;
-    final isFront =
-        _controller!.description.lensDirection == CameraLensDirection.front;
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return const SizedBox.shrink();
+    }
 
-    return Center(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: size.height,
-          height: size.width,
+    final controller = _controller!;
+    final isFront =
+        controller.description.lensDirection == CameraLensDirection.front;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenW = constraints.maxWidth;
+        final screenH = constraints.maxHeight;
+
+        final previewSize = controller.value.previewSize!;
+        final isPortrait =
+            MediaQuery.of(context).orientation == Orientation.portrait;
+
+        final previewW = isPortrait ? previewSize.height : previewSize.width;
+        final previewH = isPortrait ? previewSize.width : previewSize.height;
+
+        final screenRatio = screenW / screenH;
+        final previewRatio = previewW / previewH;
+
+        double scaleX = 1.0;
+        double scaleY = 1.0;
+
+        // BoxFit.cover math
+        if (previewRatio > screenRatio) {
+          scaleX = previewRatio / screenRatio;
+        } else {
+          scaleY = screenRatio / previewRatio;
+        }
+
+        return Transform(
+          alignment: Alignment.center,
+          transform:
+              Matrix4.identity()..scale(isFront ? scaleX : scaleX, scaleY),
+
           child: Stack(
             fit: StackFit.expand,
             children: [
               // LIVE CAMERA
-              CameraPreview(_controller!),
+              if (_currentMode != CameraMode.colorFilter)
+                CameraPreview(controller),
 
-              // FROZEN FRAME (perfect overlay)
+              // FILTERED FRAME
+              if (_currentMode == CameraMode.colorFilter &&
+                  _filteredImage != null)
+                Transform.rotate(
+                  angle: pi / 2,
+                  child: RawImage(image: _filteredImage, fit: BoxFit.cover),
+                ),
+
+              // FROZEN FRAME
               if (_isFrozen && _frozenFrame != null)
-                Transform(
-                  alignment: Alignment.center,
-                  transform:
-                      isFront
-                          ? (Matrix4.identity()..scale(-1.0, 1.0, 1.0))
-                          : Matrix4.identity(),
-
-                  child: Image.memory(_frozenFrame!, fit: BoxFit.cover),
+                FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: previewW,
+                    height: previewH,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform:
+                          Matrix4.identity()..scale(
+                            controller.description.lensDirection ==
+                                    CameraLensDirection.front
+                                ? -1.0
+                                : 1.0,
+                            1.0,
+                          ),
+                      child: Image.memory(_frozenFrame!, fit: BoxFit.fill),
+                    ),
+                  ),
                 ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -541,10 +1012,35 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
               size: 35,
             ),
             color: Colors.white,
-            onPressed: () {
-              setState(() {
-                _isFrozen = !_isFrozen;
-              });
+            onPressed: () async {
+              if (_controller == null || !_controller!.value.isInitialized) {
+                return;
+              }
+
+              if (!_isFrozen) {
+                // Capture one frame
+                final image = await _controller!.takePicture();
+                final bytes = await image.readAsBytes();
+
+                final codec = await ui.instantiateImageCodec(bytes);
+                final frame = await codec.getNextFrame();
+                ui.Image img = frame.image;
+
+                final data = await img.toByteData(
+                  format: ui.ImageByteFormat.png,
+                );
+
+                setState(() {
+                  _frozenFrame = data!.buffer.asUint8List();
+                  _isFrozen = true;
+                });
+              } else {
+                // Unfreeze
+                setState(() {
+                  _frozenFrame = null;
+                  _isFrozen = false;
+                });
+              }
             },
           ),
         ),
@@ -616,14 +1112,83 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   }
 
   Widget _colorFilterControls() {
-    return const Center(
-      child: Text('Color Filter Mode', style: TextStyle(color: Colors.white54)),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Color Filter Dropdown ONLY
+        Expanded(
+          child: PopupMenuButton<FilterColor>(
+            color: const Color(0xFF222222),
+            initialValue: _selectedFilterColor,
+            onSelected: (color) {
+              setState(() {
+                _selectedFilterColor = color;
+                _filteredImage?.dispose();
+                _filteredImage = null;
+              });
+            },
+            itemBuilder:
+                (context) =>
+                    FilterColor.values.map((color) {
+                      final selected = color == _selectedFilterColor;
+                      final colorData = filterColorData[color]!;
+                      return PopupMenuItem(
+                        value: color,
+                        child: Row(
+                          children: [
+                            Icon(
+                              selected ? Icons.check : null,
+                              color:
+                                  selected
+                                      ? Colors.greenAccent
+                                      : Colors.transparent,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              colorData['name'],
+                              style: TextStyle(
+                                color:
+                                    selected
+                                        ? Colors.greenAccent
+                                        : Colors.white,
+                                fontWeight:
+                                    selected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white54),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    filterColorData[_selectedFilterColor]!['name'],
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _cameraWithFilters() {
     Widget camera = _cameraView();
 
+    // Apply colorblind simulation
     if (_currentMode == CameraMode.colorBlindSimulation) {
       return ColorFiltered(
         colorFilter: ColorFilter.matrix(colorBlindMatrices[_colorBlindType]!),
@@ -631,7 +1196,40 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       );
     }
 
+    // Color filter mode handles its own rendering in _cameraView()
     return camera;
+  }
+
+  Future<void> _ensureBackCamera() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    if (_controller!.description.lensDirection == CameraLensDirection.back) {
+      return; // already back camera
+    }
+
+    await _switchCamera();
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    try {
+      FlashMode newMode;
+
+      if (_flashMode == FlashMode.off) {
+        newMode = FlashMode.torch; // continuous light
+      } else {
+        newMode = FlashMode.off;
+      }
+
+      await _controller!.setFlashMode(newMode);
+
+      setState(() {
+        _flashMode = newMode;
+      });
+    } catch (e) {
+      debugPrint("Flash error: $e");
+    }
   }
 
   @override
@@ -671,11 +1269,26 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                   PopupMenuButton<CameraMode>(
                     color: const Color(0xFF222222),
                     initialValue: _currentMode,
-                    onSelected: (mode) {
+                    onSelected: (mode) async {
+                      // 🔥 If entering Color Filter mode, force back camera
+                      if (mode == CameraMode.colorFilter) {
+                        await _ensureBackCamera();
+                      }
                       setState(() {
                         _currentMode = mode;
+
+                        // 🔥 CLEAR FROZEN FRAME
+                        _isFrozen = false;
+                        _frozenFrame = null;
+
+                        // Clear filter buffer when leaving filter mode
+                        if (mode != CameraMode.colorFilter) {
+                          _filteredImage?.dispose();
+                          _filteredImage = null;
+                        }
                       });
                     },
+
                     itemBuilder:
                         (context) => [
                           _modeItem(CameraMode.colorPicker, 'Color Picker'),
@@ -708,6 +1321,18 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _flashMode == FlashMode.off
+                          ? Icons.flash_off
+                          : Icons.flash_on,
+                      color:
+                          _flashMode == FlashMode.off
+                              ? Colors.white
+                              : Colors.yellow,
+                    ),
+                    onPressed: _toggleFlash,
                   ),
                 ],
               ),
