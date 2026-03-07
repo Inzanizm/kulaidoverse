@@ -171,7 +171,7 @@ class _MosaicTestScreenState extends State<MosaicTestScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -182,7 +182,7 @@ class _MosaicTestScreenState extends State<MosaicTestScreen> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),

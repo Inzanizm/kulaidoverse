@@ -78,8 +78,9 @@ class _HuehuntState extends State<Huehunt> {
 
   // ───── GAME LOGIC ─────
   void _onCardTap(int index) {
-    if (_memorizing || _revealed.contains(index) || _matched.contains(index))
+    if (_memorizing || _revealed.contains(index) || _matched.contains(index)) {
       return;
+    }
 
     setState(() => _revealed.add(index));
 
@@ -191,7 +192,7 @@ class _HuehuntState extends State<Huehunt> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -202,7 +203,7 @@ class _HuehuntState extends State<Huehunt> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),

@@ -487,18 +487,20 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   Future<void> _processColorFilterFrame(CameraImage image) async {
     try {
       // Convert YUV to RGB and apply color filter
-      final rgbaBytes = await _convertYUVtoRGBwithFilter(image);
+      final rgbaBytes = await _convertYUVtoRGBwithFilter(image, step: 3);
       if (rgbaBytes == null) return;
 
       // Create image from raw RGBA bytes
       final completer = Completer<ui.Image>();
-      final outWidth = image.width ~/ 3;
-      final outHeight = image.height ~/ 3;
+      const step = 3;
+      final outWidth = image.width ~/ step;
+      final outHeight = image.height ~/ step;
 
+      // ⚠️ SWAP WIDTH & HEIGHT HERE
       ui.decodeImageFromPixels(
         rgbaBytes,
-        outWidth,
-        outHeight,
+        outHeight, // swapped
+        outWidth, // swapped
 
         ui.PixelFormat.rgba8888,
         (ui.Image img) {
@@ -580,7 +582,10 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
         // Check if this pixel matches the selected color
         final matches = _isColorMatch(ri, gi, bi, _selectedFilterColor);
 
-        final pixelIndex = (outY * outWidth + outX) * 4;
+        final rotatedX = outHeight - 1 - outY;
+        final rotatedY = outX;
+
+        final pixelIndex = (rotatedY * outHeight + rotatedX) * 4;
 
         if (matches) {
           // Keep original color
@@ -719,6 +724,13 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       );
 
       await cam.initialize();
+
+      // Disable flash if front camera
+      if (newDescription.lensDirection == CameraLensDirection.front) {
+        await cam.setFlashMode(FlashMode.off);
+        _flashMode = FlashMode.off;
+      }
+
       if (!mounted) return;
 
       _controller = cam;
@@ -902,10 +914,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
               // FILTERED FRAME
               if (_currentMode == CameraMode.colorFilter &&
                   _filteredImage != null)
-                Transform.rotate(
-                  angle: pi / 2,
-                  child: RawImage(image: _filteredImage, fit: BoxFit.cover),
-                ),
+                RawImage(image: _filteredImage, fit: BoxFit.cover),
 
               // FROZEN FRAME
               if (_isFrozen && _frozenFrame != null)
@@ -924,7 +933,11 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                                 : 1.0,
                             1.0,
                           ),
-                      child: Image.memory(_frozenFrame!, fit: BoxFit.fill),
+                      child: Image.memory(
+                        _frozenFrame!,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                      ),
                     ),
                   ),
                 ),
@@ -1213,11 +1226,16 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   Future<void> _toggleFlash() async {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
+    // Prevent flash on front camera
+    if (_controller!.description.lensDirection == CameraLensDirection.front) {
+      return;
+    }
+
     try {
       FlashMode newMode;
 
       if (_flashMode == FlashMode.off) {
-        newMode = FlashMode.torch; // continuous light
+        newMode = FlashMode.torch;
       } else {
         newMode = FlashMode.off;
       }
@@ -1251,93 +1269,6 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                 child: const SizedBox(width: 240, height: 240),
               ),
             ),
-
-          // Top controls
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // ⬅ Back button
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-
-                  // 🎛 Mode dropdown
-                  PopupMenuButton<CameraMode>(
-                    color: const Color(0xFF222222),
-                    initialValue: _currentMode,
-                    onSelected: (mode) async {
-                      // 🔥 If entering Color Filter mode, force back camera
-                      if (mode == CameraMode.colorFilter) {
-                        await _ensureBackCamera();
-                      }
-                      setState(() {
-                        _currentMode = mode;
-
-                        // 🔥 CLEAR FROZEN FRAME
-                        _isFrozen = false;
-                        _frozenFrame = null;
-
-                        // Clear filter buffer when leaving filter mode
-                        if (mode != CameraMode.colorFilter) {
-                          _filteredImage?.dispose();
-                          _filteredImage = null;
-                        }
-                      });
-                    },
-
-                    itemBuilder:
-                        (context) => [
-                          _modeItem(CameraMode.colorPicker, 'Color Picker'),
-                          _modeItem(
-                            CameraMode.colorBlindSimulation,
-                            'Colorblind Simulation',
-                          ),
-                          _modeItem(CameraMode.colorFilter, 'Color Filter'),
-                        ],
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white54),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            _modeLabel,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            Icons.arrow_drop_down,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _flashMode == FlashMode.off
-                          ? Icons.flash_off
-                          : Icons.flash_on,
-                      color:
-                          _flashMode == FlashMode.off
-                              ? Colors.white
-                              : Colors.yellow,
-                    ),
-                    onPressed: _toggleFlash,
-                  ),
-                ],
-              ),
-            ),
-          ),
 
           // TWO-PANEL BOTTOM UI
           Align(
@@ -1402,10 +1333,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                 Container(
                   width: double.infinity,
                   height: 160,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 20,
-                    horizontal: 40,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
                   decoration: const BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.only(
@@ -1413,7 +1341,107 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
                       topRight: Radius.circular(18),
                     ),
                   ),
-                  child: _buildBottomControls(),
+                  child: Column(
+                    children: [
+                      // TOP ROW (mode + flash)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // MODE DROPDOWN (LEFT)
+                          PopupMenuButton<CameraMode>(
+                            color: const Color(0xFF222222),
+                            initialValue: _currentMode,
+                            onSelected: (mode) async {
+                              if (mode == CameraMode.colorFilter) {
+                                await _ensureBackCamera();
+                              }
+
+                              setState(() {
+                                _currentMode = mode;
+
+                                _isFrozen = false;
+                                _frozenFrame = null;
+
+                                if (mode != CameraMode.colorFilter) {
+                                  _filteredImage?.dispose();
+                                  _filteredImage = null;
+                                }
+                              });
+                            },
+
+                            itemBuilder:
+                                (context) => [
+                                  _modeItem(
+                                    CameraMode.colorPicker,
+                                    'Color Picker',
+                                  ),
+                                  _modeItem(
+                                    CameraMode.colorBlindSimulation,
+                                    'Colorblind Simulation',
+                                  ),
+                                  _modeItem(
+                                    CameraMode.colorFilter,
+                                    'Color Filter',
+                                  ),
+                                ],
+
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white54),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _modeLabel,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // FLASH BUTTON (RIGHT)
+                          Builder(
+                            builder: (context) {
+                              final isFront =
+                                  _controller?.description.lensDirection ==
+                                  CameraLensDirection.front;
+
+                              return IconButton(
+                                icon: Icon(
+                                  _flashMode == FlashMode.off
+                                      ? Icons.flash_off
+                                      : Icons.flash_on,
+                                  color:
+                                      isFront
+                                          ? Colors.grey
+                                          : (_flashMode == FlashMode.off
+                                              ? Colors.white
+                                              : Colors.yellow),
+                                ),
+                                onPressed: isFront ? null : _toggleFlash,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // CAMERA CONTROLS
+                      Expanded(child: _buildBottomControls()),
+                    ],
+                  ),
                 ),
               ],
             ),

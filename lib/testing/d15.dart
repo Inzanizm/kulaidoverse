@@ -42,7 +42,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.5),
+        shadowColor: Colors.black.withValues(alpha: 0.5),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -53,7 +53,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
@@ -143,7 +143,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
                           data: displayColor,
                           feedback: _colorBox(displayColor),
                           childWhenDragging: _colorBox(
-                            displayColor.withOpacity(0.3),
+                            displayColor.withValues(alpha: 0.3),
                           ),
                           child: _colorBox(displayColor),
                         );

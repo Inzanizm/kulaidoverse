@@ -74,7 +74,7 @@ class _HuellisionState extends State<Huellision> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 6,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       leading: Padding(
         padding: const EdgeInsets.all(8),
         child: Container(
@@ -124,7 +124,7 @@ class _HuellisionState extends State<Huellision> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

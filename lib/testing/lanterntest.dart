@@ -19,7 +19,7 @@ class _LanterntestState extends State<Lanterntest> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.5),
+        shadowColor: Colors.black.withValues(alpha: 0.5),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -206,7 +206,7 @@ class _LanterntestState extends State<Lanterntest> {
         color: color,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
             blurRadius: 14,
             spreadRadius: 3,
           ),

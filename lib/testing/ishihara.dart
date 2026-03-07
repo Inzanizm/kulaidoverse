@@ -19,7 +19,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -30,7 +30,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
@@ -102,7 +102,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 10,
                             offset: const Offset(0, 6),
                           ),
@@ -218,8 +218,8 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
             BoxShadow(
               color:
                   isSelected
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.2),
+                      ? Colors.black.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.2),
               blurRadius: 6,
               offset: const Offset(0, 4),
             ),
