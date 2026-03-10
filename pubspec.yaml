@@ -96,7 +96,6 @@ flutter:
 
   assets:
     - assets/logo/
-    - assets/shaders/selective_color.glsl
 
 flutter_launcher_icons:
   android: true
