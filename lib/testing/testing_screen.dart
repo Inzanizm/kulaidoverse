@@ -15,7 +15,7 @@ class TestingScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.5),
+        shadowColor: Colors.black.withOpacity(0.5),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
@@ -26,7 +26,7 @@ class TestingScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: Colors.black.withOpacity(0.15),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
@@ -75,90 +75,94 @@ class TestingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 25),
             Expanded(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: testButton(
-                          title: "Ishihara-Test",
-                          icon: Icons.remove_red_eye,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const IshiharaScreen(),
-                              ),
-                            );
-                          },
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: testButton(
+                            title: "Ishihara-Test",
+                            icon: Icons.remove_red_eye,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const IshiharaScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: testButton(
-                          title: "D-15 Test",
-                          icon: Icons.view_agenda,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => D15TestScreen(),
-                              ),
-                            );
-                          },
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: testButton(
+                            title: "D-15 Test",
+                            icon: Icons.view_agenda,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => D15TestScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: testButton(
-                          title: "Mosaic Test",
-                          icon: Icons.grid_on,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MosaicTestScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: testButton(
-                          title: "Lantern Test",
-                          icon: Icons.circle,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const Lanterntest(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: 1800,
-                    child: testButton(
-                      title: "HRR-Test",
-                      icon: Icons.bubble_chart,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HRRScreen()),
-                        );
-                      },
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: testButton(
+                            title: "Mosaic Test",
+                            icon: Icons.grid_on,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const mosaic(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: testButton(
+                            title: "Lantern Test",
+                            icon: Icons.circle,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const Lanterntest(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: testButton(
+                        title: "HRR-Test",
+                        icon: Icons.bubble_chart,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HRRScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

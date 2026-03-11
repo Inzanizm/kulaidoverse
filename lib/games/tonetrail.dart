@@ -169,6 +169,11 @@ class _TonetrailState extends State<Tonetrail> {
                                   ),
                                 ),
                                 onPressed: () {
+                                  // Return to landscape when quitting
+                                  SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.landscapeLeft,
+                                    DeviceOrientation.landscapeRight,
+                                  ]);
                                   Navigator.pop(context);
                                   Navigator.pop(context);
                                 },
@@ -1565,6 +1570,10 @@ class _TonetrailState extends State<Tonetrail> {
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     _timer?.cancel();
     super.dispose();
   }

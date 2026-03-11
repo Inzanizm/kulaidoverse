@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class Lanterntest extends StatefulWidget {
@@ -8,32 +9,329 @@ class Lanterntest extends StatefulWidget {
 }
 
 class _LanterntestState extends State<Lanterntest> {
+  int currentStage = 0;
   String upAnswer = "";
   String downAnswer = "";
+  bool showLanterns = true;
+
+  final List<Map<String, String>> userAnswers = [];
+
+  final List<Map<String, String>> stages = [
+    {"up": "Green", "down": "Red"},
+    {"up": "Blue", "down": "Green"},
+    {"up": "Red", "down": "Blue"},
+    {"up": "Green", "down": "Blue"},
+    {"up": "Red", "down": "Green"},
+    {"up": "Blue", "down": "Red"},
+    {"up": "Green", "down": "Red"},
+    {"up": "Blue", "down": "Green"},
+    {"up": "Red", "down": "Blue"},
+  ];
+
+  final Map<String, Color> colorMap = {
+    "Red": Colors.red,
+    "Green": Colors.green,
+    "Blue": Colors.blue,
+  };
+
+  Timer? _stageTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startStageTimer();
+  }
+
+  void _startStageTimer() {
+    _stageTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        showLanterns = true;
+        upAnswer = "";
+        downAnswer = "";
+      });
+    }
+    _stageTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() {
+        showLanterns = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _stageTimer?.cancel();
+    super.dispose();
+  }
+
+  void _submitAnswer() {
+    userAnswers.add({"up": upAnswer, "down": downAnswer});
+
+    if (currentStage < stages.length - 1) {
+      setState(() {
+        currentStage++;
+      });
+      _startStageTimer();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => LanternResultScreen(
+                stages: stages,
+                userAnswers: userAnswers,
+                onRestart: _restartTest,
+                onQuit: () => Navigator.pop(context),
+              ),
+        ),
+      );
+    }
+  }
+
+  void _restartTest() {
+    setState(() {
+      currentStage = 0;
+      upAnswer = "";
+      downAnswer = "";
+      showLanterns = true;
+      userAnswers.clear();
+    });
+    _startStageTimer();
+  }
+
+  void _confirmExitGame() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Quit Test?",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Text(
+                      "Are you sure you want to quit?\nYour current progress will be lost.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                        height: 1.4,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            "Quit",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  void _confirmRestartGame() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Restart Game?",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text(
+                          "Are you sure you want to restart the game?",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.5,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "All progress will be reset and the game will start from Stage 1.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                            height: 1.4,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _restartTest();
+                          },
+                          child: const Text(
+                            "Restart",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final currentStageData = stages[currentStage];
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.5),
+        shadowColor: Colors.black.withOpacity(0.3),
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 40, 50, 56),
+              color: const Color(0xFF283238),
               borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios,
-                size: 18,
-                color: Colors.white,
-              ),
-              onPressed: () => Navigator.pop(context),
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+              onPressed: _confirmExitGame,
             ),
           ),
         ),
@@ -44,97 +342,111 @@ class _LanterntestState extends State<Lanterntest> {
             const SizedBox(height: 4),
             const Text(
               "KULAIDOVERSE",
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black),
-            onPressed: () {},
+          const SizedBox(width: 4),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF283238),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              iconSize: 18,
+              icon: const Icon(Icons.info_outline, color: Colors.white),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder:
+                      (_) => const AlertDialog(
+                        title: Text("How to Play"),
+                        content: Text(
+                          "Watch the lantern colors appear.\nSelect the colors you saw for UP and DOWN positions.\nSubmit your answer after the lanterns disappear.",
+                        ),
+                      ),
+                );
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF283238),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              iconSize: 20,
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: () {},
+            ),
           ),
         ],
       ),
-
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
               const SizedBox(height: 16),
-
               const Text(
                 "Lantern Test",
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
-
               const SizedBox(height: 16),
-
-              // MAIN CARD
               Container(
                 width: 350,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 40, 50, 56),
+                  color: const Color.fromARGB(255, 0, 0, 0),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   children: [
-                    // INSTRUCTION
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: const [
-                          Text(
-                            "Instruction",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            "The test consists of showing 9 pairs of vertically "
-                            "oriented lights. Combinations of either red, green "
-                            "or yellow. Identify the colors up and down.\n\n"
-                            "The colors are shown for only two seconds.\n\n"
-                            "Example:\nUp - red, Down - green\n\n"
-                            "Click submit to continue.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-
                     const SizedBox(height: 20),
-
-                    const Text(
-                      "1/9",
-                      style: TextStyle(
+                    Text(
+                      "${currentStage + 1}/${stages.length}",
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
-                    // BLURRED LANTERN LIGHTS
-                    Column(
-                      children: [
-                        _lanternLight(Colors.red),
-                        const SizedBox(height: 30),
-                        _lanternLight(Colors.yellow),
-                      ],
-                    ),
-
+                    if (showLanterns)
+                      Column(
+                        children: [
+                          _lanternLight(colorMap[currentStageData['up']]!),
+                          const SizedBox(height: 30),
+                          _lanternLight(colorMap[currentStageData['down']]!),
+                        ],
+                      )
+                    else
+                      const SizedBox(height: 300),
                     const SizedBox(height: 24),
-
-                    // UP BUTTONS
                     Row(
                       children: [
                         const Text(
@@ -144,13 +456,10 @@ class _LanterntestState extends State<Lanterntest> {
                         const SizedBox(width: 10),
                         _colorButton("Red", true),
                         _colorButton("Green", true),
-                        _colorButton("Yellow", true),
+                        _colorButton("Blue", true),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
-                    // DOWN BUTTONS
                     Row(
                       children: [
                         const Text(
@@ -160,31 +469,54 @@ class _LanterntestState extends State<Lanterntest> {
                         const SizedBox(width: 2),
                         _colorButton("Red", false),
                         _colorButton("Green", false),
-                        _colorButton("Yellow", false),
+                        _colorButton("Blue", false),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
-                    SizedBox(
-                      width: 140,
-                      height: 44,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 140,
+                          height: 44,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              side: const BorderSide(color: Color(0xFF2F3238)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _confirmRestartGame,
+                            child: const Text(
+                              "Restart",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
-                        onPressed: () {
-                          debugPrint("UP: $upAnswer | DOWN: $downAnswer");
-                        },
-                        child: const Text(
-                          "Submit",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 140,
+                          height: 44,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  showLanterns ? Colors.grey : Colors.white,
+                              foregroundColor:
+                                  showLanterns ? Colors.black38 : Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: showLanterns ? null : _submitAnswer,
+                            child: const Text(
+                              "Submit",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -196,36 +528,33 @@ class _LanterntestState extends State<Lanterntest> {
     );
   }
 
-  // LANTERN LIGHT WITH BLUR
   Widget _lanternLight(Color color) {
     return Container(
-      width: 16,
-      height: 16,
+      width: 10,
+      height: 135,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.8),
-            blurRadius: 14,
-            spreadRadius: 3,
+            color: color.withOpacity(0.4),
+            blurRadius: 8,
+            spreadRadius: 7,
           ),
         ],
       ),
     );
   }
 
-  // COLOR BUTTON
   Widget _colorButton(String text, bool isUp) {
     bool selected = isUp ? upAnswer == text : downAnswer == text;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: SizedBox(
         height: 34,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: selected ? Colors.blue : Colors.white,
+            backgroundColor: selected ? const Color(0xFF2F3238) : Colors.white,
             foregroundColor: selected ? Colors.white : Colors.black,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -243,6 +572,651 @@ class _LanterntestState extends State<Lanterntest> {
           child: Text(text, style: const TextStyle(fontSize: 12)),
         ),
       ),
+    );
+  }
+}
+
+// ----------------- RESULTS SCREEN -----------------
+
+class LanternResultScreen extends StatelessWidget {
+  final List<Map<String, String>> stages;
+  final List<Map<String, String>> userAnswers;
+  final VoidCallback? onRestart;
+  final VoidCallback? onQuit;
+
+  const LanternResultScreen({
+    super.key,
+    required this.stages,
+    required this.userAnswers,
+    this.onRestart,
+    this.onQuit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate scores
+    int totalQuestions = stages.length * 2;
+    int correctCount = 0;
+    Map<String, int> colorCorrect = {"Red": 0, "Green": 0, "Blue": 0};
+    Map<String, int> colorTotal = {"Red": 0, "Green": 0, "Blue": 0};
+
+    for (int i = 0; i < stages.length; i++) {
+      final stage = stages[i];
+      final answer = userAnswers[i];
+      final upCorrect = stage['up']!;
+      final downCorrect = stage['down']!;
+      final upAnswer = answer['up'] ?? '-';
+      final downAnswer = answer['down'] ?? '-';
+
+      colorTotal[upCorrect] = (colorTotal[upCorrect] ?? 0) + 1;
+      colorTotal[downCorrect] = (colorTotal[downCorrect] ?? 0) + 1;
+
+      if (upAnswer == upCorrect) {
+        correctCount++;
+        colorCorrect[upCorrect] = (colorCorrect[upCorrect] ?? 0) + 1;
+      }
+      if (downAnswer == downCorrect) {
+        correctCount++;
+        colorCorrect[downCorrect] = (colorCorrect[downCorrect] ?? 0) + 1;
+      }
+    }
+
+    double percentCorrect = (correctCount / totalQuestions) * 100;
+
+    // Classification
+    String classification;
+    String recommendation;
+    if (percentCorrect >= 80) {
+      classification = "Normal Color Vision";
+      recommendation =
+          "Your color vision appears normal. No further action needed.";
+    } else if (percentCorrect >= 50) {
+      classification = "Mild Color Deficiency";
+      recommendation =
+          "You may have mild color vision deficiency. Consider consulting an eye care professional.";
+    } else {
+      classification = "Severe Color Deficiency";
+      recommendation =
+          "Significant color vision deficiency detected. We recommend scheduling an appointment with an ophthalmologist.";
+    }
+
+    String lanternDisplay =
+        "$classification (${percentCorrect.toStringAsFixed(1)}%)";
+
+    // Build detailed table rows
+    List<TableRow> detailRows = [
+      const TableRow(
+        decoration: BoxDecoration(color: Color(0xFF2F3238)),
+        children: [
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              "Stage",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              "Your Answer",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              "Correct",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    for (int i = 0; i < stages.length; i++) {
+      final stage = stages[i];
+      final answer = userAnswers[i];
+      final upCorrect = stage['up']!;
+      final downCorrect = stage['down']!;
+      final upAnswer = answer['up'] ?? '-';
+      final downAnswer = answer['down'] ?? '-';
+      final upCorrectBool = upAnswer == upCorrect;
+      final downCorrectBool = downAnswer == downCorrect;
+
+      detailRows.add(
+        TableRow(
+          decoration: BoxDecoration(
+            color:
+                (upCorrectBool && downCorrectBool)
+                    ? const Color.fromARGB(255, 237, 238, 238)
+                    : const Color.fromARGB(255, 255, 235, 235),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "${i + 1}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black87),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    "UP: $upAnswer",
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "DOWN: $downAnswer",
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    "UP: $upCorrect",
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                  Text(
+                    "DOWN: $downCorrect",
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 6,
+        shadowColor: Colors.black.withOpacity(0.3),
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF283238),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder:
+                      (_) => Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                "Quit Game?",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                "Are you sure you want to quit?",
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: Colors.black,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        Navigator.pop(context);
+                                        if (onQuit != null) onQuit!();
+                                      },
+                                      child: const Text("Quit"),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text("Cancel"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                );
+              },
+            ),
+          ),
+        ),
+        centerTitle: true,
+        title: Column(
+          children: [
+            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+            const SizedBox(height: 4),
+            const Text(
+              "KULAIDOVERSE",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          const SizedBox(width: 4),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF283238),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              iconSize: 18,
+              icon: const Icon(Icons.info_outline, color: Colors.white),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder:
+                      (_) => const AlertDialog(
+                        title: Text("Results Info"),
+                        content: Text(
+                          "Review your lantern test performance and color accuracy.",
+                        ),
+                      ),
+                );
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF283238),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.14),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              iconSize: 20,
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              const Align(
+                alignment: Alignment.center,
+                child: Text(
+                  "Your Color Vision Test Results",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Summary Table
+              Card(
+                color: const Color(0xFF3A3F4B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Table(
+                    border: TableBorder.all(color: Colors.white24, width: 1),
+                    columnWidths: const {
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(2),
+                      2: FlexColumnWidth(2),
+                    },
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    children: [
+                      const TableRow(
+                        decoration: BoxDecoration(color: Color(0xFF2F3238)),
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Text(
+                              "Test Type",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Text(
+                              "Score",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Text(
+                              "Status",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(255, 237, 238, 238),
+                        ),
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                            child: Text(
+                              "Lantern Test",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                            child: Text(
+                              "${percentCorrect.toStringAsFixed(1)}%",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 8,
+                            ),
+                            child: Text(
+                              classification,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Summary Box
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3A3F4B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      "Lantern: $lanternDisplay",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Recommendation:",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      recommendation,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    // Color breakdown
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _colorStat(
+                          "Red",
+                          colorCorrect["Red"]!,
+                          colorTotal["Red"]!,
+                        ),
+                        _colorStat(
+                          "Green",
+                          colorCorrect["Green"]!,
+                          colorTotal["Green"]!,
+                        ),
+                        _colorStat(
+                          "Blue",
+                          colorCorrect["Blue"]!,
+                          colorTotal["Blue"]!,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Detailed Results
+              Card(
+                color: const Color(0xFF3A3F4B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          "Detailed Results",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Table(
+                        border: TableBorder.all(
+                          color: Colors.white24,
+                          width: 1,
+                        ),
+                        columnWidths: const {
+                          0: FlexColumnWidth(1),
+                          1: FlexColumnWidth(1.5),
+                          2: FlexColumnWidth(1.5),
+                        },
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle,
+                        children: detailRows,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Button Row
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onRestart,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 58, 63, 75),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      child: const Text("Restart Test"),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        side: const BorderSide(
+                          color: Color.fromARGB(255, 58, 63, 75),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      child: const Text("Quit"),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _colorStat(String color, int correct, int total) {
+    return Column(
+      children: [
+        Text(
+          color,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        Text(
+          "$correct/$total",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }
