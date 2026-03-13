@@ -246,11 +246,13 @@ class _HuehuntState extends State<Huehunt> {
   int _memorizationTime() {
     switch (_currentIntensity) {
       case Intensity.easy:
-        return 3;
+        return _stage <= 5 ? 3 : 4;
+
       case Intensity.medium:
-        return 2;
+        return _stage <= 10 ? 5 : 6;
+
       case Intensity.hard:
-        return _stage <= 15 ? 2 : 1;
+        return _stage <= 20 ? 7 : 8;
     }
   }
 
@@ -1046,224 +1048,234 @@ class _HuehuntState extends State<Huehunt> {
   // ───── UI ─────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        _confirmExitGame();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 40, 50, 56),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withValues(alpha: 0.3),
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 40, 50, 56),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitGame,
               ),
             ),
-          ],
-        ),
-        actions: [
-          const SizedBox(width: 4),
-
-          // INFO BUTTON
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () async {
-                setState(() => _paused = true);
-                _timer?.cancel();
-
-                await showDialog(
-                  context: context,
-                  builder:
-                      (_) => AlertDialog(
-                        title: const Text("How to Play Hue Hunt"),
-                        content: const Text(
-                          "1. Memorize the colors.\n"
-                          "2. Tap to match pairs.\n"
-                          "3. Complete stages before the timer runs out.\n"
-                          "4. Accuracy affects your score and unlocks higher difficulty.",
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("OK"),
-                          ),
-                        ],
-                      ),
-                );
-
-                if (!_memorizing) _startTimer();
-                setState(() => _paused = false);
-              },
-            ),
           ),
-
-          // PAUSE BUTTON
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.pause, color: Colors.white),
-              onPressed: _showPauseMenu,
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            /// ───── TITLE ─────
-            const SizedBox(height: 24),
-            const Text(
-              "Hue-Hunt",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-
-            /// ───── STAGE INFO ─────
-            Text(
-              "Stage $_stage",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-
-            /// ───── PROGRESS BAR ─────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: (_stage % 10) / 10, // loops every 10 stages
-                  minHeight: 12,
-                  backgroundColor: Colors.grey[300],
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+            ],
+          ),
+          actions: [
+            const SizedBox(width: 4),
 
-            /// ───── REMAINING TIME ─────
-            Text(
-              "Remaining Time: ${_formatTime(_timeLeft)}",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _colors.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _currentIntensity == Intensity.hard ? 4 : 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
+            // INFO BUTTON
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  itemBuilder: (_, index) {
-                    final visible =
-                        _revealed.contains(index) || _matched.contains(index);
-                    return GestureDetector(
-                      onTap: () => _onCardTap(index),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        decoration: BoxDecoration(
-                          color: visible ? _colors[index] : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.black, // color of the border
-                            width: 2, // thickness of the border
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () async {
+                  setState(() => _paused = true);
+                  _timer?.cancel();
+
+                  await showDialog(
+                    context: context,
+                    builder:
+                        (_) => AlertDialog(
+                          title: const Text("How to Play Hue Hunt"),
+                          content: const Text(
+                            "1. Memorize the colors.\n"
+                            "2. Tap to match pairs.\n"
+                            "3. Complete stages before the timer runs out.\n"
+                            "4. Accuracy affects your score and unlocks higher difficulty.",
                           ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("OK"),
+                            ),
+                          ],
                         ),
-                        child:
-                            visible
-                                ? null
-                                : Center(
-                                  child: Image.asset(
-                                    'assets/logo/LogoKly.png',
-                                    width: 24,
-                                  ),
-                                ),
-                      ),
-                    );
-                  },
-                ),
+                  );
+
+                  if (!_memorizing) _startTimer();
+                  setState(() => _paused = false);
+                },
+              ),
+            ),
+
+            // PAUSE BUTTON
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.pause, color: Colors.white),
+                onPressed: _showPauseMenu,
               ),
             ),
           ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              /// ───── TITLE ─────
+              const SizedBox(height: 24),
+              const Text(
+                "Hue-Hunt",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+
+              /// ───── STAGE INFO ─────
+              Text(
+                "Stage $_stage",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              /// ───── PROGRESS BAR ─────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: (_stage % 10) / 10, // loops every 10 stages
+                    minHeight: 12,
+                    backgroundColor: Colors.grey[300],
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              /// ───── REMAINING TIME ─────
+              Text(
+                "Remaining Time: ${_formatTime(_timeLeft)}",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _colors.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          _currentIntensity == Intensity.hard ? 4 : 3,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                    ),
+                    itemBuilder: (_, index) {
+                      final visible =
+                          _revealed.contains(index) || _matched.contains(index);
+                      return GestureDetector(
+                        onTap: () => _onCardTap(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            color: visible ? _colors[index] : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.black, // color of the border
+                              width: 2, // thickness of the border
+                            ),
+                          ),
+                          child:
+                              visible
+                                  ? null
+                                  : Center(
+                                    child: Image.asset(
+                                      'assets/logo/LogoKly.png',
+                                      width: 24,
+                                    ),
+                                  ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

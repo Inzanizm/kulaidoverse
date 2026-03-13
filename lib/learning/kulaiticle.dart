@@ -53,12 +53,6 @@ class Kulaiticle extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: const LearningScreen(),
     );

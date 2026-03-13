@@ -527,227 +527,240 @@ class _WhotheimpState extends State<Whotheimp> {
     int grid = _gridSize();
     int cross = _gridColumns();
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      // ✅ MATCHES HUE HUNT HEADER
-      appBar: AppBar(
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        _confirmExitGame();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
+        // ✅ MATCHES HUE HUNT HEADER
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withValues(alpha: 0.3),
 
-        /// 🔙 BACK BUTTON
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame, // confirm before leaving
-            ),
-          ),
-        ),
-
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+          /// 🔙 BACK BUTTON
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitGame, // confirm before leaving
               ),
             ),
-          ],
-        ),
-
-        actions: [
-          const SizedBox(width: 4),
-
-          /// ℹ️ INFO BUTTON
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (_) => const AlertDialog(
-                        title: Text("How to Play"),
-                        content: Text(
-                          "Tap the circle that has a slightly different hue.\n"
-                          "Avoid mistakes — you only have 5 lives.\n"
-                          "Stages get harder as you progress.",
-                        ),
-                      ),
-                );
-              },
-            ),
           ),
 
-          /// ⏸ PAUSE BUTTON
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              iconSize: 20,
-              icon: const Icon(Icons.settings, color: Colors.white),
-              tooltip: "Settings",
-              onPressed:
-                  _openSettingsMenu, // you can rename to _openSettingsMenu later
-            ),
-          ),
-        ],
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            /// ───── TITLE ─────
-            const SizedBox(height: 20),
-            const Text(
-              "Hue the Impostor",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-
-            /// ───── STAGE INFO ─────
-            Text(
-              "Stage $_stage",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-
-            /// ───── PROGRESS BAR ─────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: (_stage % 10) / 10, // loops every 10 stages
-                  minHeight: 12,
-                  backgroundColor: Colors.grey[300],
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black,
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+            ],
+          ),
 
-            /// ───── LIVES ─────
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 80),
-              transform: Matrix4.translationValues(_shakeHearts ? 6 : -6, 0, 0),
-              curve: Curves.easeInOut,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_maxLives, (i) {
-                  bool lost = i >= _lives;
+          actions: [
+            const SizedBox(width: 4),
 
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    transitionBuilder:
-                        (child, animation) =>
-                            ScaleTransition(scale: animation, child: child),
-                    child: Padding(
-                      key: ValueKey(lost),
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Icon(
-                        lost ? Icons.favorite_border : Icons.favorite,
-                        size: 24,
-                        color: Colors.black,
-                      ),
-                    ),
+            /// ℹ️ INFO BUTTON
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("How to Play"),
+                          content: Text(
+                            "Tap the circle that has a slightly different hue.\n"
+                            "Avoid mistakes — you only have 5 lives.\n"
+                            "Stages get harder as you progress.",
+                          ),
+                        ),
                   );
-                }),
+                },
               ),
             ),
-            const SizedBox(height: 24),
 
-            /// 🎯 PREMIUM GAME BOARD CARD
-            Center(
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: grid,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: cross,
-                  mainAxisSpacing: 18,
-                  crossAxisSpacing: 18,
+            /// ⏸ PAUSE BUTTON
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                iconSize: 20,
+                icon: const Icon(Icons.settings, color: Colors.white),
+                tooltip: "Settings",
+                onPressed:
+                    _openSettingsMenu, // you can rename to _openSettingsMenu later
+              ),
+            ),
+          ],
+        ),
+
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              /// ───── TITLE ─────
+              const SizedBox(height: 20),
+              const Text(
+                "Hue the Impostor",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+
+              /// ───── STAGE INFO ─────
+              Text(
+                "Stage $_stage",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
                 ),
-                itemBuilder:
-                    (_, index) => GestureDetector(
-                      onTap: () => _onTap(index),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        decoration: BoxDecoration(
-                          color: _colors[index],
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black87, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              /// ───── PROGRESS BAR ─────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: (_stage % 10) / 10, // loops every 10 stages
+                    minHeight: 12,
+                    backgroundColor: Colors.grey[300],
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              /// ───── LIVES ─────
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 80),
+                transform: Matrix4.translationValues(
+                  _shakeHearts ? 6 : -6,
+                  0,
+                  0,
+                ),
+                curve: Curves.easeInOut,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_maxLives, (i) {
+                    bool lost = i >= _lives;
+
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      transitionBuilder:
+                          (child, animation) =>
+                              ScaleTransition(scale: animation, child: child),
+                      child: Padding(
+                        key: ValueKey(lost),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Icon(
+                          lost ? Icons.favorite_border : Icons.favorite,
+                          size: 24,
+                          color: Colors.black,
                         ),
                       ),
-                    ),
+                    );
+                  }),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+
+              /// 🎯 PREMIUM GAME BOARD CARD
+              Center(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: grid,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cross,
+                    mainAxisSpacing: 18,
+                    crossAxisSpacing: 18,
+                  ),
+                  itemBuilder:
+                      (_, index) => GestureDetector(
+                        onTap: () => _onTap(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          decoration: BoxDecoration(
+                            color: _colors[index],
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black87, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

@@ -1054,313 +1054,322 @@ class _TonetrailState extends State<Tonetrail> {
   // ───── UI ─────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFEDEDED),
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        _confirmExitGame();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFEDEDED),
 
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.25),
-        toolbarHeight: 70,
-        centerTitle: true,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withValues(alpha: 0.25),
+          toolbarHeight: 70,
+          centerTitle: true,
 
-        /// BACK BUTTON
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              onPressed: _confirmExitGame,
+          /// BACK BUTTON
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                onPressed: _confirmExitGame,
+              ),
             ),
           ),
-        ),
 
-        /// TITLE
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(width: 6),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+          /// TITLE
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(width: 6),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+
+          /// INFO + PAUSE
+          actions: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: IconButton(
+                iconSize: 20,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () async {
+                  setState(() => _paused = true);
+                  _timer?.cancel();
+
+                  await showDialog(
+                    context: context,
+                    builder:
+                        (_) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          title: const Text("How to Play Tone Trail"),
+                          content: const Text(
+                            "1. Arrange the tones from lightest to darkest.\n\n"
+                            "2. Fill all empty slots before checking.\n\n"
+                            "3. Complete the gradient before time runs out.\n\n"
+                            "4. Stages become harder as tones get closer.",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Got it"),
+                            ),
+                          ],
+                        ),
+                  );
+
+                  if (!_paused) return;
+                  _startTimer();
+                  setState(() => _paused = false);
+                },
+              ),
+            ),
+
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: IconButton(
+                iconSize: 20,
+                icon: const Icon(Icons.pause, color: Colors.white),
+                onPressed: _openSettingsMenu,
               ),
             ),
           ],
         ),
 
-        /// INFO + PAUSE
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: IconButton(
-              iconSize: 20,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () async {
-                setState(() => _paused = true);
-                _timer?.cancel();
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      /// TITLE
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Tone Trail",
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-                await showDialog(
-                  context: context,
-                  builder:
-                      (_) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                      const SizedBox(height: 4),
+
+                      /// STAGE
+                      Text(
+                        "Stage $_stage",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                         ),
-                        title: const Text("How to Play Tone Trail"),
-                        content: const Text(
-                          "1. Arrange the tones from lightest to darkest.\n\n"
-                          "2. Fill all empty slots before checking.\n\n"
-                          "3. Complete the gradient before time runs out.\n\n"
-                          "4. Stages become harder as tones get closer.",
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Got it"),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      /// PROGRESS BAR
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: (_stage % 10) / 10,
+                            minHeight: 10,
+                            backgroundColor: Colors.grey[300],
+                            color: Colors.black,
                           ),
-                        ],
-                      ),
-                );
-
-                if (!_paused) return;
-                _startTimer();
-                setState(() => _paused = false);
-              },
-            ),
-          ),
-
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: IconButton(
-              iconSize: 20,
-              icon: const Icon(Icons.pause, color: Colors.white),
-              onPressed: _openSettingsMenu,
-            ),
-          ),
-        ],
-      ),
-
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    /// TITLE
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Tone Trail",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    /// STAGE
-                    Text(
-                      "Stage $_stage",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    /// PROGRESS BAR
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: (_stage % 10) / 10,
-                          minHeight: 10,
-                          backgroundColor: Colors.grey[300],
-                          color: Colors.black,
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-                    /// TIMER
-                    Text(
-                      "Remaining Time: ${_formatTime(_timeLeft)}",
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                      /// TIMER
+                      Text(
+                        "Remaining Time: ${_formatTime(_timeLeft)}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    /// GAME CONTAINER
-                    Center(
-                      child: Container(
-                        width:
-                            constraints.maxWidth > 700
-                                ? 600
-                                : constraints.maxWidth * 0.9,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E2E35),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Column(
-                          children: [
-                            /// COLOR NAME
-                            Text(
-                              currentColorName,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                      /// GAME CONTAINER
+                      Center(
+                        child: Container(
+                          width:
+                              constraints.maxWidth > 700
+                                  ? 600
+                                  : constraints.maxWidth * 0.9,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2E2E35),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Column(
+                            children: [
+                              /// COLOR NAME
+                              Text(
+                                currentColorName,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
 
-                            const SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
-                            /// ─── DROP SLOTS (click-to-place) ───
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: List.generate(slots.length, (index) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    // Remove color from slot back to palette
-                                    if (slots[index] != null) {
-                                      setState(() {
-                                        draggableColors.add(slots[index]!);
-                                        slots[index] = null;
-                                      });
-                                    }
-                                  },
-                                  child: Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          slots[index] ?? Colors.grey.shade300,
-                                      borderRadius: BorderRadius.circular(10),
+                              /// ─── DROP SLOTS (click-to-place) ───
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(slots.length, (index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // Remove color from slot back to palette
+                                      if (slots[index] != null) {
+                                        setState(() {
+                                          draggableColors.add(slots[index]!);
+                                          slots[index] = null;
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            slots[index] ??
+                                            Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              /// ─── COLOR PALETTE (click to place) ───
+                              if (draggableColors.isNotEmpty) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Wrap(
+                                    alignment: WrapAlignment.center,
+                                    spacing: 14,
+                                    runSpacing: 14,
+                                    children:
+                                        draggableColors.map((color) {
+                                          return GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                // Find first empty slot
+                                                final emptyIndex = slots
+                                                    .indexOf(null);
+                                                if (emptyIndex != -1) {
+                                                  slots[emptyIndex] = color;
+                                                  draggableColors.remove(color);
+                                                } else {
+                                                  // Optionally show snackbar if all slots are filled
+                                                  _showCustomSnackBar(
+                                                    message:
+                                                        "All slots are already filled!",
+                                                    color: Colors.grey,
+                                                  );
+                                                }
+                                              });
+                                            },
+                                            child: colorTile(color),
+                                          );
+                                        }).toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              /// SUBMIT BUTTON
+                              SizedBox(
+                                width: 160,
+                                child: ElevatedButton(
+                                  onPressed: checkAnswer,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                );
-                              }),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            /// ─── COLOR PALETTE (click to place) ───
-                            if (draggableColors.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 14,
-                                  runSpacing: 14,
-                                  children:
-                                      draggableColors.map((color) {
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              // Find first empty slot
-                                              final emptyIndex = slots.indexOf(
-                                                null,
-                                              );
-                                              if (emptyIndex != -1) {
-                                                slots[emptyIndex] = color;
-                                                draggableColors.remove(color);
-                                              } else {
-                                                // Optionally show snackbar if all slots are filled
-                                                _showCustomSnackBar(
-                                                  message:
-                                                      "All slots are already filled!",
-                                                  color: Colors.grey,
-                                                );
-                                              }
-                                            });
-                                          },
-                                          child: colorTile(color),
-                                        );
-                                      }).toList(),
+                                  child: const Text("Submit"),
                                 ),
                               ),
-                              const SizedBox(height: 16),
                             ],
-
-                            /// SUBMIT BUTTON
-                            SizedBox(
-                              width: 160,
-                              child: ElevatedButton(
-                                onPressed: checkAnswer,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text("Submit"),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

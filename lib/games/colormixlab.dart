@@ -434,233 +434,242 @@ class _ColorMixLabState extends State<ColorMixLab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        _confirmExitGame();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withValues(alpha: 0.3),
 
-        /// 🔙 BACK BUTTON
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame,
+          /// 🔙 BACK BUTTON
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitGame,
+              ),
             ),
           ),
-        ),
 
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+
+          actions: [
+            const SizedBox(width: 4),
+
+            /// ℹ️ INFO BUTTON
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("How to Play"),
+                          content: Text(
+                            "Tap the circle that has a slightly different hue.\n"
+                            "Avoid mistakes — you only have 5 lives.\n"
+                            "Stages get harder as you progress.",
+                          ),
+                        ),
+                  );
+                },
+              ),
+            ),
+
+            /// ⏸ PAUSE BUTTON
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                iconSize: 20,
+                icon: const Icon(Icons.settings, color: Colors.white),
+                tooltip: "Settings",
+                onPressed: _openSettingsMenu,
               ),
             ),
           ],
         ),
 
-        actions: [
-          const SizedBox(width: 4),
-
-          /// ℹ️ INFO BUTTON
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+        body: Column(
+          children: [
+            const SizedBox(height: 20),
+            const Text(
+              "Color Mixing Lab",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Stage $_stage",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: (_stage % 10) / 10,
+                  minHeight: 12,
+                  backgroundColor: Colors.grey[300],
+                  color: Colors.black,
                 ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (_) => const AlertDialog(
-                        title: Text("How to Play"),
-                        content: Text(
-                          "Tap the circle that has a slightly different hue.\n"
-                          "Avoid mistakes — you only have 5 lives.\n"
-                          "Stages get harder as you progress.",
-                        ),
-                      ),
-                );
-              },
-            ),
-          ),
-
-          /// ⏸ PAUSE BUTTON
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              iconSize: 20,
-              icon: const Icon(Icons.settings, color: Colors.white),
-              tooltip: "Settings",
-              onPressed: _openSettingsMenu,
-            ),
-          ),
-        ],
-      ),
-
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          const Text(
-            "Color Mixing Lab",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Stage $_stage",
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: (_stage % 10) / 10,
-                minHeight: 12,
-                backgroundColor: Colors.grey[300],
-                color: Colors.black,
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          /// Hearts
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 80),
-            transform: Matrix4.translationValues(_shakeHearts ? 6 : -6, 0, 0),
-            curve: Curves.easeInOut,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_maxLives, (i) {
-                bool lost = i >= _lives; // gray heart if lost
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  transitionBuilder:
-                      (child, animation) =>
-                          ScaleTransition(scale: animation, child: child),
-                  child: Padding(
-                    key: ValueKey(lost),
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(
-                      lost ? Icons.favorite_border : Icons.favorite,
-                      size: 24,
-                      color: Colors.black,
+            /// Hearts
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 80),
+              transform: Matrix4.translationValues(_shakeHearts ? 6 : -6, 0, 0),
+              curve: Curves.easeInOut,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_maxLives, (i) {
+                  bool lost = i >= _lives; // gray heart if lost
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder:
+                        (child, animation) =>
+                            ScaleTransition(scale: animation, child: child),
+                    child: Padding(
+                      key: ValueKey(lost),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Icon(
+                        lost ? Icons.favorite_border : Icons.favorite,
+                        size: 24,
+                        color: Colors.black,
+                      ),
                     ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            /// Question Card
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Color equation row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      colorCircle(leftColor, radius: 40, showBorder: true),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text("+", style: TextStyle(fontSize: 28)),
+                      ),
+                      colorCircle(rightColor, radius: 40, showBorder: true),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        child: Text("=", style: TextStyle(fontSize: 28)),
+                      ),
+                      colorCircle(
+                        Colors.grey[300]!,
+                        radius: 40,
+                        showBorder: true,
+                      ),
+                    ],
                   ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-          /// Question Card
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Color equation row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    colorCircle(leftColor, radius: 40, showBorder: true),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text("+", style: TextStyle(fontSize: 28)),
-                    ),
-                    colorCircle(rightColor, radius: 40, showBorder: true),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text("=", style: TextStyle(fontSize: 28)),
-                    ),
-                    colorCircle(
-                      Colors.grey[300]!,
-                      radius: 40,
-                      showBorder: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                // Color choices
-                Wrap(
-                  spacing: 28,
-                  runSpacing: 20,
-                  alignment: WrapAlignment.center,
-                  children:
-                      choices
-                          .map(
-                            (c) => GestureDetector(
-                              onTap: () => checkAnswer(c),
-                              child: colorCircle(
-                                c,
-                                radius: 38,
-                                showBorder: true,
+                  // Color choices
+                  Wrap(
+                    spacing: 28,
+                    runSpacing: 20,
+                    alignment: WrapAlignment.center,
+                    children:
+                        choices
+                            .map(
+                              (c) => GestureDetector(
+                                onTap: () => checkAnswer(c),
+                                child: colorCircle(
+                                  c,
+                                  radius: 38,
+                                  showBorder: true,
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
-                ),
-              ],
+                            )
+                            .toList(),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
