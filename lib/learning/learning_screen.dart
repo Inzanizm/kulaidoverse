@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/learning/lesson.dart';
 import 'article_detail.dart';
 
 class LearningScreen extends StatefulWidget {
@@ -135,7 +136,7 @@ class _LearningScreenState extends State<LearningScreen> {
     );
   }
 
-  // ---------------- LESSONS ----------------
+  // ---------------- LESSONS (NO IMAGES) ----------------
   Widget _lessonList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,19 +144,22 @@ class _LearningScreenState extends State<LearningScreen> {
         _discoverCard(),
         const SizedBox(height: 24),
         const Text(
-          'Popular Lessons',
+          'Lessons',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Expanded(
           child: GridView.builder(
-            itemCount: 4,
+            itemCount: lessonsData.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            itemBuilder: (context, _) => _lessonCard(context),
+            itemBuilder: (context, index) {
+              final lesson = lessonsData[index];
+              return _lessonCard(context, lesson);
+            },
           ),
         ),
       ],
@@ -190,12 +194,15 @@ class _LearningScreenState extends State<LearningScreen> {
     );
   }
 
-  Widget _lessonCard(BuildContext context) {
+  // NO IMAGE - Just icon and text
+  Widget _lessonCard(BuildContext context, Lesson lesson) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ArticleDetailScreen()),
+          MaterialPageRoute(
+            builder: (_) => ArticleDetailScreen(lesson: lesson),
+          ),
         );
       },
       child: Container(
@@ -204,20 +211,21 @@ class _LearningScreenState extends State<LearningScreen> {
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school, size: 40),
-            SizedBox(height: 10),
+            // Icon instead of image
+            const Icon(Icons.school, size: 40),
+            const SizedBox(height: 10),
             Text(
-              'What is\nColorblindness',
+              lesson.title,
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Read Lesson',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              lesson.subtitle,
+              style: const TextStyle(color: Colors.grey, fontSize: 11),
             ),
           ],
         ),
