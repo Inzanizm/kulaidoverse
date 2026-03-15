@@ -76,9 +76,9 @@ class GamesScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: testButton(
+                          child: gameButton(
                             title: "Hue Hunt",
-                            icon: Icons.sports_esports_rounded,
+                            logoPath: "assets/game_logos/huehunt_logo.png",
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -91,9 +91,9 @@ class GamesScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: testButton(
+                          child: gameButton(
                             title: "Tone Trail",
-                            icon: Icons.sports_esports_rounded,
+                            logoPath: "assets/game_logos/tonetrail_logo.png",
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -110,9 +110,10 @@ class GamesScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: testButton(
+                          child: gameButton(
                             title: "Hue the Impostor",
-                            icon: Icons.sports_esports_rounded,
+                            logoPath:
+                                "assets/game_logos/huetheimpostor_logo.png",
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -125,9 +126,10 @@ class GamesScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: testButton(
+                          child: gameButton(
                             title: "Color Mixing Lab",
-                            icon: Icons.sports_esports_rounded,
+                            logoPath:
+                                "assets/game_logos/colormixinglab_logo.png",
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -143,9 +145,9 @@ class GamesScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: testButton(
+                      child: gameButton(
                         title: "Huellision",
-                        icon: Icons.sports_esports_rounded,
+                        logoPath: "assets/game_logos/huellision_logo.png",
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -167,9 +169,9 @@ class GamesScreen extends StatelessWidget {
   }
 }
 
-Widget testButton({
+Widget gameButton({
   required String title,
-  required IconData icon,
+  required String logoPath,
   required VoidCallback onPressed,
 }) {
   return SizedBox(
@@ -180,11 +182,26 @@ Widget testButton({
         backgroundColor: const Color.fromARGB(255, 40, 50, 56),
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        padding: const EdgeInsets.all(12),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 42, color: Colors.white),
+          // Game Logo
+          Image.asset(
+            logoPath,
+            height: 60,
+            width: 60,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback icon if image fails to load
+              return const Icon(
+                Icons.sports_esports_rounded,
+                size: 42,
+                color: Colors.white,
+              );
+            },
+          ),
           const SizedBox(height: 12),
           Text(
             title,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HRRScreen extends StatefulWidget {
   const HRRScreen({super.key});
@@ -167,7 +169,7 @@ class _HRRScreenState extends State<HRRScreen> {
   Map<String, int> total = {"Protan": 0, "Deutan": 0, "Tritan": 0};
   Map<String, int> wrong = {"Protan": 0, "Deutan": 0, "Tritan": 0};
   Map<String, int> correct = {"Protan": 0, "Deutan": 0, "Tritan": 0};
-  double protanDeficiency = 0; // Now shows deficiency % (inverse)
+  double protanDeficiency = 0;
   double deutanDeficiency = 0;
   double tritanDeficiency = 0;
   double redGreenDeficiency = 0;
@@ -175,6 +177,8 @@ class _HRRScreenState extends State<HRRScreen> {
   bool isMonochrome = false;
   String classification = "";
   String recommendation = "";
+
+  bool _isSaved = false; // Track if results have been saved
 
   @override
   void initState() {
@@ -221,6 +225,7 @@ class _HRRScreenState extends State<HRRScreen> {
       setState(() {
         showResults = true;
       });
+      _saveTestResult(); // ADDED: Save results when test completes
     }
   }
 
@@ -257,34 +262,33 @@ class _HRRScreenState extends State<HRRScreen> {
     correct["Deutan"] = total["Deutan"]! - wrong["Deutan"]!;
     correct["Tritan"] = total["Tritan"]! - wrong["Tritan"]!;
 
-    // Calculate DEFICIENCY percentages (inverse of correct) - 0 correct = 100% deficiency
-    protanDeficiency = (wrong["Protan"]! / total["Protan"]!) * 100;
-    deutanDeficiency = (wrong["Deutan"]! / total["Deutan"]!) * 100;
-    tritanDeficiency = (wrong["Tritan"]! / total["Tritan"]!) * 100;
+    // Calculate RATING percentages (correct rate)
+    protanDeficiency = 100 - ((wrong["Protan"]! / total["Protan"]!) * 100);
+    deutanDeficiency = 100 - ((wrong["Deutan"]! / total["Deutan"]!) * 100);
+    tritanDeficiency = 100 - ((wrong["Tritan"]! / total["Tritan"]!) * 100);
 
-    // Calculate Red-Green DEFICIENCY percentage
+    // Calculate Red-Green RATING percentage
     int redGreenWrongCount = wrong["Protan"]! + wrong["Deutan"]!;
     int redGreenTotal = total["Protan"]! + total["Deutan"]!;
-    redGreenDeficiency = (redGreenWrongCount / redGreenTotal) * 100;
+    redGreenDeficiency = 100 - ((redGreenWrongCount / redGreenTotal) * 100);
 
-    // Calculate overall deficiency
+    // Calculate overall rating
     int totalWrong = wrong["Protan"]! + wrong["Deutan"]! + wrong["Tritan"]!;
     int totalAll = total["Protan"]! + total["Deutan"]! + total["Tritan"]!;
-    overallDeficiency = (totalWrong / totalAll) * 100;
+    overallDeficiency = 100 - ((totalWrong / totalAll) * 100);
 
     isMonochrome = totalWrongStages == stages.length;
 
-    // Simplified classification based on overall DEFICIENCY (inverse of correct percentage)
-    // Higher deficiency = worse vision
+    // Classification based on rating
     if (isMonochrome) {
       classification = "Monochromacy";
       recommendation =
           "Total color vision deficiency detected. Immediate consultation with an ophthalmologist is strongly recommended.";
-    } else if (overallDeficiency >= 50) {
+    } else if (overallDeficiency <= 50) {
       classification = "Severe Color Blindness";
       recommendation =
           "Significant color vision deficiency detected. We recommend scheduling an appointment with an ophthalmologist for professional diagnosis and guidance.";
-    } else if (overallDeficiency >= 20) {
+    } else if (overallDeficiency <= 80) {
       classification = "Mild Color Blindness";
       recommendation =
           "You may have mild color vision deficiency. Consider consulting an eye care professional for a comprehensive evaluation.";
@@ -293,6 +297,32 @@ class _HRRScreenState extends State<HRRScreen> {
       recommendation =
           "Your color vision appears normal. No further action needed.";
     }
+  }
+
+  // ADDED: Save test results to database
+  Future<void> _saveTestResult() async {
+    if (_isSaved) return; // Prevent duplicate saves
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final syncService = SyncService();
+
+    await syncService.saveTestResult(
+      userId: user.id,
+      testType: 'hrr',
+      overallRating: overallDeficiency,
+      overallStatus: classification,
+      recommendation: recommendation,
+    );
+
+    setState(() {
+      _isSaved = true;
+    });
+
+    print(
+      'HRR test saved! Rating: ${overallDeficiency.toStringAsFixed(1)}%, Status: $classification',
+    );
   }
 
   void _restartTest() {
@@ -320,10 +350,11 @@ class _HRRScreenState extends State<HRRScreen> {
       isMonochrome = false;
       classification = "";
       recommendation = "";
+      _isSaved = false; // Reset save flag
     });
   }
 
-  void _confirmExitGame() {
+  void _confirmExitTest() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -416,7 +447,7 @@ class _HRRScreenState extends State<HRRScreen> {
     );
   }
 
-  void _confirmRestartGame() {
+  void _confirmRestartTest() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -433,7 +464,7 @@ class _HRRScreenState extends State<HRRScreen> {
                 children: [
                   const Center(
                     child: Text(
-                      "Restart Game?",
+                      "Restart Test?",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -446,7 +477,7 @@ class _HRRScreenState extends State<HRRScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: const [
                         Text(
-                          "Are you sure you want to restart the game?",
+                          "Are you sure you want to restart the test?",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
@@ -457,7 +488,7 @@ class _HRRScreenState extends State<HRRScreen> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "All progress will be reset and the game will start from Stage 1.",
+                          "All progress will be reset and the test will start from Stage 1.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
@@ -658,516 +689,491 @@ class _HRRScreenState extends State<HRRScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        Navigator.pop(context);
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withOpacity(0.3),
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame,
-            ),
+              ),
+            ],
           ),
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+          actions: [
+            const SizedBox(width: 4),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("Disclaimer and Purpose"),
+                          content: Text(
+                            "Disclaimer:\n"
+                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
+                            "Purpose:\n"
+                            "The HRR Test (Hardy–Rand–Rittler Test) is used to detect and classify different types of color vision deficiencies through the recognition of symbols embedded in colored plates. It can identify both red–green and blue–yellow impairments and helps determine the type and possible severity of the color vision deficiency.",
+                          ),
+                        ),
+                  );
+                },
               ),
             ),
           ],
         ),
-        actions: [
-          const SizedBox(width: 4),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (_) => const AlertDialog(
-                        title: Text("How to Play"),
-                        content: Text(
-                          "Identify the shapes in each quadrant (Upper Left, Upper Right, Bottom Left, Bottom Right).\nSelect 'Nothing' if no shape is visible.\nSubmit when all quadrants are answered.",
-                        ),
-                      ),
-                );
-              },
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              iconSize: 20,
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              const Align(
-                alignment: Alignment.center,
-                child: Text(
-                  "Your Color Vision Test Results",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Your Color Vision Test Results",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Summary Table with 4 rows: Protan, Deutan, Tritan, Red-Green - showing DEFICIENCY %
-              Card(
-                color: const Color(0xFF3A3F4B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Table(
-                    border: TableBorder.all(color: Colors.white24, width: 1),
-                    columnWidths: const {
-                      0: FlexColumnWidth(3),
-                      1: FlexColumnWidth(2),
-                      2: FlexColumnWidth(2),
-                    },
-                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                    children: [
-                      const TableRow(
-                        decoration: BoxDecoration(color: Color(0xFF2F3238)),
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: Text(
-                              "Test Type",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white70,
+                const SizedBox(height: 16),
+                // Summary Table with 4 rows: Protan, Deutan, Tritan, Red-Green
+                Card(
+                  color: const Color(0xFF3A3F4B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Table(
+                      border: TableBorder.all(color: Colors.white24, width: 1),
+                      columnWidths: const {
+                        0: FlexColumnWidth(3),
+                        1: FlexColumnWidth(2),
+                        2: FlexColumnWidth(2),
+                      },
+                      defaultVerticalAlignment:
+                          TableCellVerticalAlignment.middle,
+                      children: [
+                        const TableRow(
+                          decoration: BoxDecoration(color: Color(0xFF2F3238)),
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Text(
+                                "Test Type",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: Text(
-                              "Deficiency",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white70,
+                            Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Text(
+                                "Rating",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: Text(
-                              "Wrong",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white70,
+                            Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Text(
+                                "Correct",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      // Protan row - shows deficiency % and wrong/total
-                      TableRow(
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 238, 238, 238),
+                          ],
                         ),
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "Protan",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                        // Protan row
+                        TableRow(
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(255, 238, 238, 238),
+                          ),
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "Protan",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${protanDeficiency.toStringAsFixed(1)}%",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${protanDeficiency.toStringAsFixed(1)}%",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${wrong["Protan"]}/${total["Protan"]}",
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${correct["Protan"]}/${total["Protan"]}",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      // Deutan row
-                      TableRow(
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 231, 231, 231),
+                          ],
                         ),
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "Deutan",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                        // Deutan row
+                        TableRow(
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(255, 231, 231, 231),
+                          ),
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "Deutan",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${deutanDeficiency.toStringAsFixed(1)}%",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${deutanDeficiency.toStringAsFixed(1)}%",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${wrong["Deutan"]}/${total["Deutan"]}",
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${correct["Deutan"]}/${total["Deutan"]}",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      // Tritan row
-                      TableRow(
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 238, 238, 238),
+                          ],
                         ),
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "Tritan",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                        // Tritan row
+                        TableRow(
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(255, 238, 238, 238),
+                          ),
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "Tritan",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${tritanDeficiency.toStringAsFixed(1)}%",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${tritanDeficiency.toStringAsFixed(1)}%",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${wrong["Tritan"]}/${total["Tritan"]}",
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${correct["Tritan"]}/${total["Tritan"]}",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      // Red-Green row
-                      TableRow(
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 231, 231, 231),
+                          ],
                         ),
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "Red-Green",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                        // Red-Green row
+                        TableRow(
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(255, 231, 231, 231),
+                          ),
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "Red-Green",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${redGreenDeficiency.toStringAsFixed(1)}%",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${redGreenDeficiency.toStringAsFixed(1)}%",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              "${wrong["Protan"]! + wrong["Deutan"]!}/${total["Protan"]! + total["Deutan"]!}",
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                "${correct["Protan"]! + correct["Deutan"]!}/${total["Protan"]! + total["Deutan"]!}",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Overall Score Card
-              Card(
-                color: const Color(0xFF3A3F4B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 24),
+                // Overall Rating Card
+                Card(
+                  color: const Color(0xFF3A3F4B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(
+                          "Overall Rating: ${overallDeficiency.toStringAsFixed(1)}%",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          classification,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                elevation: 4,
-                child: Padding(
+                const SizedBox(height: 24),
+                // Recommendation Box
+                Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3A3F4B),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white24),
+                  ),
                   child: Column(
                     children: [
-                      Text(
-                        "Overall Deficiency: ${overallDeficiency.toStringAsFixed(1)}%",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
+                      const Text(
+                        "Recommendation:",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        classification,
+                        recommendation,
                         style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
+                          color: Colors.white,
+                          fontSize: 14,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Recommendation Box - simplified like other tests
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+                const SizedBox(height: 24),
+                // Detailed Results
+                Card(
                   color: const Color(0xFF3A3F4B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            "Detailed Results",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Table(
+                          border: TableBorder.all(
+                            color: Colors.white24,
+                            width: 1,
+                          ),
+                          columnWidths: const {
+                            0: FlexColumnWidth(1),
+                            1: FlexColumnWidth(2),
+                            2: FlexColumnWidth(2),
+                          },
+                          defaultVerticalAlignment:
+                              TableCellVerticalAlignment.middle,
+                          children: detailRows,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Column(
+                const SizedBox(height: 24),
+                // Button Row
+                Row(
                   children: [
-                    const Text(
-                      "Recommendation:",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      recommendation,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Detailed Results
-              Card(
-                color: const Color(0xFF3A3F4B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          "Detailed Results",
-                          style: TextStyle(
-                            color: Colors.white,
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _confirmRestartTest,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            58,
+                            63,
+                            75,
+                          ),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          textStyle: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        child: const Text("Restart Test"),
                       ),
-                      Table(
-                        border: TableBorder.all(
-                          color: Colors.white24,
-                          width: 1,
-                        ),
-                        columnWidths: const {
-                          0: FlexColumnWidth(1),
-                          1: FlexColumnWidth(2),
-                          2: FlexColumnWidth(2),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
                         },
-                        defaultVerticalAlignment:
-                            TableCellVerticalAlignment.middle,
-                        children: detailRows,
+                        child: const Text("Quit"),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              // Button Row
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _confirmRestartGame,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 58, 63, 75),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      child: const Text("Restart Test"),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Quit"),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -1216,243 +1222,267 @@ class _HRRScreenState extends State<HRRScreen> {
 
     final stageData = stages[currentStage];
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _confirmExitTest();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          const SizedBox(width: 4),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (_) => const AlertDialog(
-                        title: Text("How to Play"),
-                        content: Text(
-                          "Identify the shapes in each quadrant (Upper Left, Upper Right, Bottom Left, Bottom Right).\nSelect 'Nothing' if no shape is visible.\nSubmit when all quadrants are answered.",
-                        ),
-                      ),
-                );
-              },
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              iconSize: 20,
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 12),
-          Text(
-            "Stage ${currentStage + 1} of ${stages.length} (${stageData["category"]})",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "What do you see?",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2F3238),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    stageData["image"],
-                    width: double.infinity,
-                    fit: BoxFit.contain,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withOpacity(0.3),
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
                   ),
-                ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitTest,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            "Choose an answer",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _dropdownBox(
-                        label: "Top left",
-                        value: topLeft,
-                        onChanged: (v) => setState(() => topLeft = v!),
-                        items: choices,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _dropdownBox(
-                        label: "Top right",
-                        value: topRight,
-                        onChanged: (v) => setState(() => topRight = v!),
-                        items: choices,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _dropdownBox(
-                        label: "Bottom left",
-                        value: bottomLeft,
-                        onChanged: (v) => setState(() => bottomLeft = v!),
-                        items: choices,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _dropdownBox(
-                        label: "Bottom right",
-                        value: bottomRight,
-                        onChanged: (v) => setState(() => bottomRight = v!),
-                        items: choices,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          centerTitle: true,
+          title: Column(
             children: [
-              SizedBox(
-                width: 140,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _confirmRestartGame,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Color(0xFF2F3238)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Restart",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 140,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: allSelected ? _submitStage : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2F3238),
-                    disabledBackgroundColor: Colors.grey.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Submit",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-        ],
+          actions: [
+            const SizedBox(width: 4),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.question_mark, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("Tutorial:"),
+                          content: Text(
+                            "A colored plate with a hidden symbol will appear on the screen. Carefully observe the plate and select the symbol you see from the given options. If no symbol is visible, choose “No Symbol.” Continue until all plates are completed.",
+                          ),
+                        ),
+                  );
+                },
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("Disclaimer and Purpose"),
+                          content: Text(
+                            "Disclaimer:\n"
+                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
+                            "Purpose:\n"
+                            "The HRR Test (Hardy–Rand–Rittler Test) is used to detect and classify different types of color vision deficiencies through the recognition of symbols embedded in colored plates. It can identify both red–green and blue–yellow impairments and helps determine the type and possible severity of the color vision deficiency.",
+                          ),
+                        ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            const SizedBox(height: 12),
+            Text(
+              "Stage ${currentStage + 1} of ${stages.length} (${stageData["category"]})",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "What do you see?",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2F3238),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      stageData["image"],
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Choose an answer",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _dropdownBox(
+                          label: "Top left",
+                          value: topLeft,
+                          onChanged: (v) => setState(() => topLeft = v!),
+                          items: choices,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _dropdownBox(
+                          label: "Top right",
+                          value: topRight,
+                          onChanged: (v) => setState(() => topRight = v!),
+                          items: choices,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _dropdownBox(
+                          label: "Bottom left",
+                          value: bottomLeft,
+                          onChanged: (v) => setState(() => bottomLeft = v!),
+                          items: choices,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _dropdownBox(
+                          label: "Bottom right",
+                          value: bottomRight,
+                          onChanged: (v) => setState(() => bottomRight = v!),
+                          items: choices,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 140,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _confirmRestartTest,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      side: const BorderSide(color: Color(0xFF2F3238)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "Restart",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 140,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: allSelected ? _submitStage : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2F3238),
+                      disabledBackgroundColor: Colors.grey.shade400,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "Submit",
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

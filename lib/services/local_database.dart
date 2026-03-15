@@ -1,5 +1,6 @@
 // services/local_database.dart
 import 'package:kulaidoverse/games/game_history.dart';
+import 'package:kulaidoverse/testing/test_result.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -16,31 +17,90 @@ class LocalDatabase {
     return _database!;
   }
 
+  // services/local_database.dart
+
   Future<Database> _initDatabase() async {
     final documentsDirectory = await getDatabasesPath();
     final path = join(documentsDirectory, 'kulaidoverse.db');
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3, // 🔥 INCREMENT from 2 to 3
       onCreate: (db, version) async {
+        // Existing tables...
         await db.execute('''
-          CREATE TABLE game_history (
+        CREATE TABLE game_history (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          game_type TEXT NOT NULL,
+          stage_reached INTEGER NOT NULL,
+          score INTEGER NOT NULL,
+          accuracy REAL NOT NULL,
+          completed_at TEXT NOT NULL,
+          is_synced INTEGER DEFAULT 0
+        )
+      ''');
+        await db.execute('''
+        CREATE INDEX idx_user_id ON game_history(user_id)
+      ''');
+
+        await db.execute('''
+        CREATE TABLE test_results (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          test_type TEXT NOT NULL,
+          overall_rating REAL NOT NULL,
+          overall_status TEXT NOT NULL,
+          recommendation TEXT NOT NULL,
+          completed_at TEXT NOT NULL,
+          is_synced INTEGER DEFAULT 0
+        )
+      ''');
+        await db.execute('''
+        CREATE INDEX idx_test_user_id ON test_results(user_id)
+      ''');
+
+        // 🔥 ADD user_settings table in onCreate
+        await db.execute('''
+        CREATE TABLE user_settings (
+          user_id TEXT PRIMARY KEY,
+          camera_quality TEXT DEFAULT 'medium',
+          updated_at TEXT NOT NULL,
+          is_synced INTEGER DEFAULT 0
+        )
+      ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // Migration from version 1 to 2 (test_results table)
+        if (oldVersion < 2) {
+          await db.execute('''
+          CREATE TABLE IF NOT EXISTS test_results (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
-            game_type TEXT NOT NULL,
-            stage_reached INTEGER NOT NULL,
-            score INTEGER NOT NULL,
-            accuracy REAL NOT NULL,
+            test_type TEXT NOT NULL,
+            overall_rating REAL NOT NULL,
+            overall_status TEXT NOT NULL,
+            recommendation TEXT NOT NULL,
             completed_at TEXT NOT NULL,
             is_synced INTEGER DEFAULT 0
           )
         ''');
-
-        // Index for faster queries
-        await db.execute('''
-          CREATE INDEX idx_user_id ON game_history(user_id)
+          await db.execute('''
+          CREATE INDEX IF NOT EXISTS idx_test_user_id ON test_results(user_id)
         ''');
+        }
+
+        // 🔥 Migration from version 2 to 3 (user_settings table)
+        if (oldVersion < 3) {
+          await db.execute('''
+          CREATE TABLE IF NOT EXISTS user_settings (
+            user_id TEXT PRIMARY KEY,
+            camera_quality TEXT DEFAULT 'medium',
+            updated_at TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0
+          )
+        ''');
+        }
       },
     );
   }
@@ -102,6 +162,92 @@ class LocalDatabase {
       'game_history',
       where: 'user_id = ? AND completed_at < ?',
       whereArgs: [userId, before.toIso8601String()],
+    );
+  }
+
+  Future<void> insertTestResult(TestResult result) async {
+    final db = await database;
+    await db.insert(
+      'test_results',
+      result.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // Get all unsynced test results
+  Future<List<TestResult>> getUnsyncedTestResults(String userId) async {
+    final db = await database;
+    final maps = await db.query(
+      'test_results',
+      where: 'user_id = ? AND is_synced = ?',
+      whereArgs: [userId, 0],
+    );
+    return maps.map((map) => TestResult.fromMap(map)).toList();
+  }
+
+  // Get all test results for user
+  Future<List<TestResult>> getTestResults(String userId) async {
+    final db = await database;
+    final maps = await db.query(
+      'test_results',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'completed_at DESC',
+    );
+    return maps.map((map) => TestResult.fromMap(map)).toList();
+  }
+
+  // Get test results by type
+  Future<List<TestResult>> getTestResultsByType(
+    String userId,
+    String testType,
+  ) async {
+    final db = await database;
+    final maps = await db.query(
+      'test_results',
+      where: 'user_id = ? AND test_type = ?',
+      whereArgs: [userId, testType],
+      orderBy: 'completed_at DESC',
+    );
+    return maps.map((map) => TestResult.fromMap(map)).toList();
+  }
+
+  // Mark test results as synced
+  Future<void> markTestResultsAsSynced(List<String> ids) async {
+    final db = await database;
+    final batch = db.batch();
+
+    for (final id in ids) {
+      batch.update(
+        'test_results',
+        {'is_synced': 1},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+
+  // Get user settings
+  Future<Map<String, dynamic>?> getUserSettings(String userId) async {
+    final db = await database;
+    final maps = await db.query(
+      'user_settings',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    if (maps.isEmpty) return null;
+    return maps.first;
+  }
+
+  // Save user settings locally
+  Future<void> saveUserSettings(Map<String, dynamic> settings) async {
+    final db = await database;
+    await db.insert(
+      'user_settings',
+      settings,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 }

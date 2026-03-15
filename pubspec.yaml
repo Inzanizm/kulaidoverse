@@ -45,6 +45,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   path: ^1.9.1
   uuid: ^4.5.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -101,6 +102,7 @@ flutter:
 
   assets:
     - assets/logo/
+    - assets/game_logos/
 
 flutter_launcher_icons:
   android: true

@@ -43,36 +43,36 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
   bool _isOnline = false;
   GameStatsScreenState? _stats;
 
-  // Game configurations - keys must match game_type values in your database
+  // Game configurations with logo image paths
   final List<Map<String, dynamic>> _games = [
     {
       'key': 'hue hunt',
       'name': 'Hue Hunt',
-      'icon': Icons.search,
+      'logo': 'assets/game_logos/huehunt_logo.png',
       'color': Colors.blue,
     },
     {
       'key': 'tone trail',
       'name': 'Tone Trail',
-      'icon': Icons.gradient,
+      'logo': 'assets/game_logos/tonetrail_logo.png',
       'color': Colors.purple,
     },
     {
       'key': 'hue the impostor',
       'name': 'Hue the Impostor',
-      'icon': Icons.remove_red_eye,
+      'logo': 'assets/game_logos/huetheimpostor_logo.png',
       'color': Colors.orange,
     },
     {
       'key': 'color mixing lab',
       'name': 'Color Mixing Lab',
-      'icon': Icons.science,
+      'logo': 'assets/game_logos/colormixinglab_logo.png',
       'color': Colors.green,
     },
     {
       'key': 'huellision',
       'name': 'Huellision',
-      'icon': Icons.lightbulb,
+      'logo': 'assets/game_logos/huellision_logo.png',
       'color': Colors.red,
     },
   ];
@@ -234,7 +234,7 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
                         final stat = _stats?.gameStats[key];
                         return _buildGameCard(
                           name: game['name'] as String,
-                          icon: game['icon'] as IconData,
+                          logoPath: game['logo'] as String,
                           color: game['color'] as Color,
                           stat: stat,
                         );
@@ -296,10 +296,18 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
 
   Widget _buildGameCard({
     required String name,
-    required IconData icon,
+    required String logoPath,
     required Color color,
     required GameStat? stat,
   }) {
+    // Grayscale color matrix to make logos black
+    const List<double> blackMatrix = [
+      0.2126, 0.7152, 0.0722, 0, 0, // Red channel (grayscale weights)
+      0.2126, 0.7152, 0.0722, 0, 0, // Green channel
+      0.2126, 0.7152, 0.0722, 0, 0, // Blue channel
+      0, 0, 0, 1, 0, // Alpha preserved
+    ];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -313,13 +321,35 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
         children: [
           Row(
             children: [
+              // Game Logo Container with colored background
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withOpacity(
+                    0.15,
+                  ), // Slightly more opaque for better visibility
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ColorFiltered(
+                    // Apply grayscale matrix to make logo black
+                    colorFilter: const ColorFilter.matrix(blackMatrix),
+                    child: Image.asset(
+                      logoPath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to colored icon if image fails to load
+                        return Icon(
+                          Icons.videogame_asset,
+                          color: color,
+                          size: 32,
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -409,18 +439,13 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: Colors.grey[600]), // Reduced from 16
+              Icon(icon, size: 14, color: Colors.grey[600]),
               const SizedBox(width: 4),
-              // Wrap with Flexible to prevent overflow
               Flexible(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 11, // Reduced from 12
-                    color: Colors.grey[600],
-                  ),
-                  overflow:
-                      TextOverflow.ellipsis, // Add ellipsis if still too long
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
               ),
@@ -429,10 +454,7 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18, // Reduced from 20
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             overflow: TextOverflow.ellipsis,
           ),
         ],

@@ -1,7 +1,9 @@
 // lib/user_profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/game_history_screen.dart';
 import 'package:kulaidoverse/game_stats_screen.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/testing_results_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -90,23 +92,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
               const SizedBox(height: 12),
 
+              // In user_profile_screen.dart
               _buildMenuButton(
                 icon: Icons.history_outlined,
                 label: 'Game History',
                 onTap: () {
-                  // TODO: Navigate to GameHistoryScreen
-                  _showComingSoon(context, 'Game History');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const GameHistoryScreen(),
+                    ),
+                  );
                 },
               ),
 
               const SizedBox(height: 12),
 
+              // In user_profile_screen.dart, update the Testing Results button:
               _buildMenuButton(
                 icon: Icons.assignment_outlined,
                 label: 'Testing Results',
                 onTap: () {
-                  // TODO: Navigate to TestingResultsScreen
-                  _showComingSoon(context, 'Testing Results');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TestingResultsScreen(),
+                    ),
+                  );
                 },
               ),
             ],

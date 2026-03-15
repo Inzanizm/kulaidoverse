@@ -531,7 +531,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
                 iconSize: 18,
-                icon: const Icon(Icons.info_outline, color: Colors.white),
+                icon: const Icon(Icons.question_mark, color: Colors.white),
                 onPressed: () {
                   showDialog(
                     context: context,

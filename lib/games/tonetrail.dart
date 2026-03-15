@@ -1173,7 +1173,7 @@ class _TonetrailState extends State<Tonetrail> {
               ),
               child: IconButton(
                 iconSize: 20,
-                icon: const Icon(Icons.info_outline, color: Colors.white),
+                icon: const Icon(Icons.question_mark, color: Colors.white),
                 onPressed: () async {
                   setState(() => _paused = true);
                   _timer?.cancel();

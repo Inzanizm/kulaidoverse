@@ -6,6 +6,9 @@ import 'dart:typed_data';
 import 'package:kulaidoverse/color_info_screen.dart';
 import 'dart:ui' as ui;
 
+import 'package:kulaidoverse/services/local_database.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 enum CameraMode { colorPicker, colorBlindSimulation, colorFilter }
 
 enum ColorBlindType {
@@ -425,9 +428,30 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       orElse: () => cameras.first,
     );
 
+    // Load camera quality from settings
+    final user = Supabase.instance.client.auth.currentUser;
+    ResolutionPreset resolution = ResolutionPreset.medium;
+
+    if (user != null) {
+      final settings = await LocalDatabase().getUserSettings(user.id);
+      if (settings != null) {
+        switch (settings['camera_quality']) {
+          case 'low':
+            resolution = ResolutionPreset.low;
+            break;
+          case 'high':
+            resolution = ResolutionPreset.high;
+            break;
+          case 'medium':
+          default:
+            resolution = ResolutionPreset.medium;
+        }
+      }
+    }
+
     _controller = CameraController(
       back,
-      ResolutionPreset.medium,
+      resolution, // Use the loaded resolution
       imageFormatGroup: ImageFormatGroup.yuv420,
       enableAudio: false,
     );
@@ -471,7 +495,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
         _processingFrame = false;
       }
     }
-    // Color filter mode - process entire frame
+    // Color filter mode - process entire frame at full resolution
     else if (_currentMode == CameraMode.colorFilter) {
       if (_processingFilter) return;
       if (_filterTimer?.isActive ?? false) return;
@@ -486,22 +510,20 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
 
   Future<void> _processColorFilterFrame(CameraImage image) async {
     try {
-      // Convert YUV to RGB and apply color filter
-      final rgbaBytes = await _convertYUVtoRGBwithFilter(image, step: 3);
+      // Convert YUV to RGB and apply color filter at FULL RESOLUTION
+      final rgbaBytes = await _convertYUVtoRGBwithFilter(image);
       if (rgbaBytes == null) return;
 
-      // Create image from raw RGBA bytes
+      // Create image from raw RGBA bytes at full resolution
       final completer = Completer<ui.Image>();
-      const step = 3;
-      final outWidth = image.width ~/ step;
-      final outHeight = image.height ~/ step;
+      final width = image.width;
+      final height = image.height;
 
-      // ⚠️ SWAP WIDTH & HEIGHT HERE
+      // ⚠️ SWAP WIDTH & HEIGHT for rotation
       ui.decodeImageFromPixels(
         rgbaBytes,
-        outHeight, // swapped
-        outWidth, // swapped
-
+        height, // swapped
+        width, // swapped
         ui.PixelFormat.rgba8888,
         (ui.Image img) {
           completer.complete(img);
@@ -525,10 +547,8 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     }
   }
 
-  Future<Uint8List?> _convertYUVtoRGBwithFilter(
-    CameraImage image, {
-    int step = 3, // <-- ADD THIS
-  }) async {
+  // REMOVED: step parameter - now processes at full resolution
+  Future<Uint8List?> _convertYUVtoRGBwithFilter(CameraImage image) async {
     if (image.format.group != ImageFormatGroup.yuv420) return null;
 
     final width = image.width;
@@ -542,17 +562,11 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     final uvRowStride = planeU.bytesPerRow;
     final uvPixelStride = planeU.bytesPerPixel ?? 1;
 
-    // Create RGBA output
-    final outWidth = width ~/ step;
-    final outHeight = height ~/ step;
-    final rgbaBytes = Uint8List(outWidth * outHeight * 4);
+    // Create RGBA output at FULL RESOLUTION
+    final rgbaBytes = Uint8List(width * height * 4);
 
-    for (int y = 0; y < height; y += step) {
-      final outY = y ~/ step;
-
-      for (int x = 0; x < width; x += step) {
-        final outX = x ~/ step;
-
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
         final yIndex = y * yRowStride + x;
         final uvIndex = (y ~/ 2) * uvRowStride + (x ~/ 2) * uvPixelStride;
 
@@ -582,10 +596,11 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
         // Check if this pixel matches the selected color
         final matches = _isColorMatch(ri, gi, bi, _selectedFilterColor);
 
-        final rotatedX = outHeight - 1 - outY;
-        final rotatedY = outX;
+        // Apply rotation: (x, y) -> (height - 1 - y, x)
+        final rotatedX = height - 1 - y;
+        final rotatedY = x;
 
-        final pixelIndex = (rotatedY * outHeight + rotatedX) * 4;
+        final pixelIndex = (rotatedY * height + rotatedX) * 4;
 
         if (matches) {
           // Keep original color
@@ -911,7 +926,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
               if (_currentMode != CameraMode.colorFilter)
                 CameraPreview(controller),
 
-              // FILTERED FRAME
+              // FILTERED FRAME - now at full resolution
               if (_currentMode == CameraMode.colorFilter &&
                   _filteredImage != null)
                 RawImage(image: _filteredImage, fit: BoxFit.cover),

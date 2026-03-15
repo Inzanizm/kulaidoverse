@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class D15TestScreen extends StatefulWidget {
   const D15TestScreen({super.key});
@@ -13,7 +15,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
   bool isSaturated = true;
   Color? selectedColor;
 
-  final List<Color> baseColors = [
+  final List<Color> capColors = [
     const Color(0xFF923E31), // Cap 1 - Red
     const Color(0xFFB24B28), // Cap 2
     const Color(0xFFD05923), // Cap 3
@@ -31,8 +33,11 @@ class _D15TestScreenState extends State<D15TestScreen> {
     const Color(0xFF533AAD), // Cap 15 - Blue/Violet
   ];
 
-  late List<Color?> placedColors;
+  // Fixed reference color (never changes)
   final Color referenceColor = const Color.fromARGB(255, 131, 56, 44);
+
+  late List<Color?> placedColors;
+  late List<Color> shuffledCaps; // Randomized order of caps to place
 
   @override
   void initState() {
@@ -41,8 +46,18 @@ class _D15TestScreenState extends State<D15TestScreen> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _initializeTest();
+  }
+
+  void _initializeTest() {
     placedColors = List<Color?>.filled(16, null);
-    placedColors[0] = referenceColor;
+    placedColors[0] = referenceColor; // Reference always at position 0
+
+    // Create shuffled list of cap colors (excluding reference)
+    shuffledCaps = List<Color>.from(capColors);
+    shuffledCaps.shuffle(
+      Random(),
+    ); // Only placement is randomized, colors stay the same
   }
 
   @override
@@ -55,7 +70,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
   }
 
   // ADDED: Confirm exit dialog method
-  void _confirmExitGame() {
+  void _confirmExitTest() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -156,7 +171,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
 
   int _getCapNumber(Color color) {
     if (color == referenceColor) return 0;
-    int index = baseColors.indexOf(color);
+    int index = capColors.indexOf(color); // Use capColors instead of baseColors
     if (index != -1) return index + 1;
     return -1;
   }
@@ -382,313 +397,347 @@ class _D15TestScreenState extends State<D15TestScreen> {
     final height = MediaQuery.of(context).size.height;
     final fontSize = (width + height) / 80;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF2E3035),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.3),
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: _confirmExitGame,
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        _confirmExitTest();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF2E3035),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withOpacity(0.3),
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitTest,
+              ),
             ),
           ),
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              const Text(
+                "KULAIDOVERSE",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            const SizedBox(width: 4),
+            // INFO BUTTON ONLY - Settings removed
+            Container(
+              margin: const EdgeInsets.only(right: 8), // Changed from symmetric
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.question_mark, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("Tutorial:"),
+                          content: Text(
+                            "A reference color and several colored tiles will appear on the screen. Select the tiles in order to arrange them into a smooth color sequence starting from the reference color. Continue selecting until all colors are arranged.",
+                          ),
+                        ),
+                  );
+                },
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (_) => const AlertDialog(
+                          title: Text("Disclaimer and Purpose"),
+                          content: Text(
+                            "Disclaimer:\n"
+                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
+                            "Purpose:\n"
+                            "The Farnsworth D-15 Test evaluates a user's ability to arrange colored caps in the correct hue sequence. By analyzing how the colors are ordered, the test helps identify the presence, type, and possible severity of color vision deficiency, particularly red–green and blue–yellow defects.",
+                          ),
+                        ),
+                  );
+                },
               ),
             ),
           ],
         ),
-        actions: [
-          const SizedBox(width: 4),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(),
-              iconSize: 18,
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (_) => const AlertDialog(
-                        title: Text("How to Play"),
-                        content: Text(
-                          "Identify the shapes in each quadrant (Upper Left, Upper Right, Bottom Left, Bottom Right).\nSelect 'Nothing' if no shape is visible.\nSubmit when all quadrants are answered.",
-                        ),
-                      ),
-                );
-              },
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283238),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.14),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              iconSize: 20,
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  "Arrange the colors in smooth transition order from red to blue",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: fontSize + 4,
-                    fontWeight: FontWeight.bold,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    "Arrange the colors in smooth transition order from red to blue",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: fontSize + 4,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _modeButton("Saturated", true, fontSize),
-                    const SizedBox(width: 16),
-                    _modeButton("Desaturated", false, fontSize),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children:
-                                baseColors.map((color) {
-                                  final isPlaced = placedColors.contains(color);
-                                  final displayColor = _applyMode(color);
-                                  final isSelected = selectedColor == color;
+                      _modeButton("Saturated", true, fontSize),
+                      const SizedBox(width: 16),
+                      _modeButton("Desaturated", false, fontSize),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children:
+                                  shuffledCaps.map((color) {
+                                    final isPlaced = placedColors.contains(
+                                      color,
+                                    );
+                                    final displayColor = _applyMode(color);
+                                    final isSelected = selectedColor == color;
 
-                                  if (isPlaced)
-                                    return const SizedBox(width: 0, height: 0);
+                                    if (isPlaced) {
+                                      return const SizedBox(
+                                        width: 0,
+                                        height: 0,
+                                      );
+                                    }
 
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () => _selectColor(color),
-                                      child: Container(
-                                        width: fontSize * 2.16,
-                                        height: fontSize * 2.16,
-                                        decoration: BoxDecoration(
-                                          color: displayColor,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color:
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () => _selectColor(color),
+                                        child: Container(
+                                          width: fontSize * 2.16,
+                                          height: fontSize * 2.16,
+                                          decoration: BoxDecoration(
+                                            color: displayColor,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color:
+                                                  isSelected
+                                                      ? Colors.blue
+                                                      : Colors.black,
+                                              width: isSelected ? 4 : 1.5,
+                                            ),
+                                            boxShadow:
                                                 isSelected
-                                                    ? Colors.blue
-                                                    : Colors.black,
-                                            width: isSelected ? 4 : 1.5,
+                                                    ? [
+                                                      BoxShadow(
+                                                        color: Colors.blue
+                                                            .withOpacity(0.5),
+                                                        blurRadius: 8,
+                                                        spreadRadius: 2,
+                                                      ),
+                                                    ]
+                                                    : null,
                                           ),
-                                          boxShadow:
-                                              isSelected
-                                                  ? [
-                                                    BoxShadow(
-                                                      color: Colors.blue
-                                                          .withOpacity(0.5),
-                                                      blurRadius: 8,
-                                                      spreadRadius: 2,
-                                                    ),
-                                                  ]
-                                                  : null,
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }).toList(),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 28),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 14,
-                        alignment: WrapAlignment.center,
-                        children: List.generate(16, (index) {
-                          final isReference = index == 0;
-                          final hasColor = placedColors[index] != null;
-                          final isEmptySlot =
-                              !isReference &&
-                              !hasColor &&
-                              selectedColor != null;
+                        const SizedBox(height: 28),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 14,
+                          alignment: WrapAlignment.center,
+                          children: List.generate(16, (index) {
+                            final isReference = index == 0;
+                            final hasColor = placedColors[index] != null;
+                            final isEmptySlot =
+                                !isReference &&
+                                !hasColor &&
+                                selectedColor != null;
 
-                          return GestureDetector(
-                            onTap: () => _placeColor(index),
-                            child: Container(
-                              width: fontSize * 2.16,
-                              height: fontSize * 2.16,
-                              decoration: BoxDecoration(
-                                color: _applyMode(
-                                  placedColors[index] ??
-                                      (isReference
-                                          ? referenceColor
-                                          : const Color.fromARGB(
-                                            255,
-                                            241,
-                                            234,
-                                            234,
-                                          )),
+                            return GestureDetector(
+                              onTap: () => _placeColor(index),
+                              child: Container(
+                                width: fontSize * 2.16,
+                                height: fontSize * 2.16,
+                                decoration: BoxDecoration(
+                                  color: _applyMode(
+                                    placedColors[index] ??
+                                        (isReference
+                                            ? referenceColor
+                                            : const Color.fromARGB(
+                                              255,
+                                              241,
+                                              234,
+                                              234,
+                                            )),
+                                  ),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        isEmptySlot
+                                            ? Colors.blue
+                                            : Colors.black,
+                                    width: isEmptySlot ? 3 : 1.5,
+                                  ),
+                                  boxShadow:
+                                      isEmptySlot
+                                          ? [
+                                            BoxShadow(
+                                              color: Colors.blue.withOpacity(
+                                                0.3,
+                                              ),
+                                              blurRadius: 6,
+                                              spreadRadius: 1,
+                                            ),
+                                          ]
+                                          : null,
                                 ),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      isEmptySlot ? Colors.blue : Colors.black,
-                                  width: isEmptySlot ? 3 : 1.5,
-                                ),
-                                boxShadow:
-                                    isEmptySlot
-                                        ? [
-                                          BoxShadow(
-                                            color: Colors.blue.withOpacity(0.3),
-                                            blurRadius: 6,
-                                            spreadRadius: 1,
+                                child:
+                                    isReference
+                                        ? const Center(
+                                          child: Text(
+                                            "REF",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
                                           ),
-                                        ]
+                                        )
                                         : null,
                               ),
-                              child:
-                                  isReference
-                                      ? const Center(
-                                        child: Text(
-                                          "REF",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                      : null,
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            placedColors = List<Color?>.filled(16, null);
+                            placedColors[0] = referenceColor;
+                            selectedColor = null;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: fontSize * 4,
+                            vertical: fontSize * 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Restart",
+                          style: TextStyle(fontSize: fontSize),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: _showResults,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: fontSize * 4,
+                            vertical: fontSize * 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Results",
+                          style: TextStyle(fontSize: fontSize),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          placedColors = List<Color?>.filled(16, null);
-                          placedColors[0] = referenceColor;
-                          selectedColor = null;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: fontSize * 4,
-                          vertical: fontSize * 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Restart",
-                        style: TextStyle(fontSize: fontSize),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: _showResults,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: fontSize * 4,
-                          vertical: fontSize * 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Results",
-                        style: TextStyle(fontSize: fontSize),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -702,9 +751,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
       onPressed: () {
         setState(() {
           isSaturated = value;
-          placedColors = List<Color?>.filled(16, null);
-          placedColors[0] = referenceColor;
-          selectedColor = null;
+          // Don't reshuffle when changing mode, just update display
         });
       },
       style: ElevatedButton.styleFrom(
@@ -755,107 +802,10 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
     return 'Severe';
   }
 
-  void _confirmExitGame() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (_) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Center(
-                    child: Text(
-                      "Quit Test?",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      "Are you sure you want to quit?\nYour current progress will be lost.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.normal,
-                        height: 1.4,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.pop(context);
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            "Quit",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-    );
-  }
-
-  Future<bool> _onWillPop() async {
-    // Return to landscape when pressing back button
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    return true; // Allow the pop to happen
+  @override
+  void initState() {
+    super.initState();
+    _saveTestResult(); // Auto-save when results screen opens
   }
 
   @override
@@ -864,38 +814,22 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
     String deutanStatus = _getSeverityFromErrors(widget.deutanErrors);
     String tritanStatus = _getSeverityFromErrors(widget.tritanErrors);
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope<Object?>(
+      // Add generic type <Object?>
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        // New callback with result parameter
+        if (didPop) return;
+        Navigator.pop(context);
+        Navigator.pop(context);
+      },
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Colors.white,
           elevation: 6,
           shadowColor: Colors.black.withOpacity(0.3),
-          leading: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFF283238),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                iconSize: 18,
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                onPressed: _confirmExitGame,
-              ),
-            ),
-          ),
           centerTitle: true,
           title: Column(
             children: [
@@ -936,34 +870,16 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                     context: context,
                     builder:
                         (_) => const AlertDialog(
-                          title: Text("How to Play"),
+                          title: Text("Disclaimer and Purpose"),
                           content: Text(
-                            "Identify the shapes in each quadrant (Upper Left, Upper Right, Bottom Left, Bottom Right).\nSelect 'Nothing' if no shape is visible.\nSubmit when all quadrants are answered.",
+                            "Disclaimer:\n"
+                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
+                            "Purpose:\n"
+                            "The Farnsworth D-15 Test evaluates a user's ability to arrange colored caps in the correct hue sequence. By analyzing how the colors are ordered, the test helps identify the presence, type, and possible severity of color vision deficiency, particularly red–green and blue–yellow defects.",
                           ),
                         ),
                   );
                 },
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF283238),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.14),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                padding: const EdgeInsets.all(6),
-                constraints: const BoxConstraints(),
-                iconSize: 20,
-                icon: const Icon(Icons.settings, color: Colors.white),
-                onPressed: () {},
               ),
             ),
           ],
@@ -1220,7 +1136,7 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        "Total Error Score: ${widget.totalError} / 15",
+                        "Rating: ${(100 - ((widget.totalError / 15) * 100)).toStringAsFixed(0)}%",
                         style: const TextStyle(
                           color: Color.fromARGB(255, 255, 255, 255),
                           fontSize: 18,
@@ -1250,7 +1166,7 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        "Interpretation:",
+                        "Recommendation:",
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
@@ -1339,6 +1255,27 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
     } else {
       return 'Significant color vision deficiency. Occupational guidance recommended.';
     }
+  }
+
+  Future<void> _saveTestResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final syncService = SyncService();
+
+    final rating = (100 - ((widget.totalError / 15) * 100));
+    final status = widget.diagnosis;
+    final recommendation = _getRecommendation(widget.totalError);
+
+    await syncService.saveTestResult(
+      userId: user.id,
+      testType: 'd15',
+      overallRating: rating,
+      overallStatus: status,
+      recommendation: recommendation,
+    );
+
+    print('Test saved! Rating: $rating%, Status: $status');
   }
 }
 
