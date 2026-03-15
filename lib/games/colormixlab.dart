@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ColorMixLab extends StatefulWidget {
   const ColorMixLab({super.key});
@@ -8,6 +10,7 @@ class ColorMixLab extends StatefulWidget {
 }
 
 class _ColorMixLabState extends State<ColorMixLab> {
+  final SyncService _syncService = SyncService();
   int points = 0;
   late Color leftColor;
   late Color rightColor;
@@ -118,6 +121,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
   void _showEndDialog(String title) {
     final int totalQuestions = points + (_maxLives - _lives); // correct + wrong
     final double accuracy = _attempts == 0 ? 0 : (points / _attempts) * 100;
+    _saveGameResult();
 
     showDialog(
       context: context,
@@ -225,6 +229,21 @@ class _ColorMixLabState extends State<ColorMixLab> {
             ),
           ),
     );
+  }
+
+  Future<void> _saveGameResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    await _syncService.saveGameResult(
+      userId: user.id,
+      gameType: 'color mixing lab',
+      stageReached: _stage,
+      score: _score,
+      accuracy: accuracy,
+    );
+
+    print('Game saved! Stage: $_stage, Score: $_score, Accuracy: $accuracy%');
   }
 
   Widget colorCircle(

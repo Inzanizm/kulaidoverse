@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:kulaidoverse/games/games_screen.dart';
 import 'package:kulaidoverse/learning/kulaiticle.dart';
 import 'package:kulaidoverse/testing/testing_screen.dart';
+import 'package:kulaidoverse/user_profile_screen.dart';
 import 'color_camera_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String? userName;
   final String? avatarUrl;
+  final String? userEmail;
 
-  const HomeScreen({super.key, this.userName, this.avatarUrl});
+  const HomeScreen({super.key, this.userName, this.avatarUrl, this.userEmail});
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +40,32 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Profile Picture
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage:
-                        avatarUrl != null
-                            ? NetworkImage(avatarUrl!)
-                            : const AssetImage(
-                                  'assets/logo/default_avatar_icon.png',
-                                )
-                                as ImageProvider,
+                  // In home_screen.dart, update the CircleAvatar in the top bar:
+
+                  // Profile Picture - Now tappable
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) => UserProfileScreen(
+                                userName: userName ?? 'User',
+                                avatarUrl: avatarUrl,
+                              ),
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundImage:
+                          avatarUrl != null && avatarUrl!.isNotEmpty
+                              ? NetworkImage(avatarUrl!)
+                              : const AssetImage(
+                                    'assets/logo/default_avatar_icon.png',
+                                  )
+                                  as ImageProvider,
+                    ),
                   ),
 
                   // App Logo and Name

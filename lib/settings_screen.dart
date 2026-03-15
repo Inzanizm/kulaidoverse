@@ -113,16 +113,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Spacer(),
 
             // 🔹 Logout Button
-            ElevatedButton.icon(
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout),
-              label: const Text("Sign Out"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _signOut,
+                icon: const Icon(Icons.logout),
+                label: const Text(
+                  'Sign Out',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

@@ -1,8 +1,9 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Tonetrail extends StatefulWidget {
   const Tonetrail({super.key});
@@ -14,6 +15,7 @@ class Tonetrail extends StatefulWidget {
 enum Difficulty { easy, medium, hard }
 
 class _TonetrailState extends State<Tonetrail> {
+  final SyncService _syncService = SyncService();
   int _stage = 1;
   int _totalScore = 0;
 
@@ -52,18 +54,45 @@ class _TonetrailState extends State<Tonetrail> {
   String _getHueName(double hue) {
     hue = hue % 360;
 
-    if (hue < 15 || hue >= 345) return "Red";
-    if (hue < 45) return "Red-Orange";
-    if (hue < 75) return "Orange";
-    if (hue < 105) return "Yellow";
-    if (hue < 135) return "Yellow-Green";
-    if (hue < 165) return "Green";
-    if (hue < 195) return "Blue-Green";
-    if (hue < 225) return "Cyan";
-    if (hue < 255) return "Blue";
-    if (hue < 285) return "Blue-Violet";
-    if (hue < 315) return "Violet";
-    return "Red-Violet";
+    // Narrow 15° ranges centered on the actual generated values (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330)
+    // This prevents 330° (Pink) from being categorized as "Red" (which happens with 345° boundary)
+
+    if (hue >= 352.5 || hue < 7.5) return "Red"; // 0° ± 7.5°
+    if (hue >= 7.5 && hue < 22.5) return "Red-Orange"; // Between Red and Orange
+    if (hue >= 22.5 && hue < 37.5) return "Orange"; // 30° ± 7.5°
+    if (hue >= 37.5 && hue < 52.5) return "Orange-Yellow"; // Between
+    if (hue >= 52.5 && hue < 67.5) {
+      return "Yellow-Orange"; // 60° ± 7.5° (was Yellow-Orange)
+    }
+    if (hue >= 67.5 && hue < 82.5) return "Yellow"; // 90° ± 7.5° (was Yellow)
+    if (hue >= 82.5 && hue < 97.5) return "Yellow-Green"; // Between
+    if (hue >= 97.5 && hue < 112.5) {
+      return "Lime"; // 120° ± 7.5° (was Yellow-Green)
+    }
+    if (hue >= 112.5 && hue < 127.5) return "Green"; // Between
+    if (hue >= 127.5 && hue < 142.5) return "Green"; // 150° ± 7.5° (was Green)
+    if (hue >= 142.5 && hue < 157.5) return "Teal"; // Between
+    if (hue >= 157.5 && hue < 172.5) {
+      return "Cyan-Green"; // 180° ± 7.5° (was Green)
+    }
+    if (hue >= 172.5 && hue < 187.5) return "Cyan"; // Between
+    if (hue >= 187.5 && hue < 202.5) return "Cyan"; // 210° ± 7.5° (was Cyan)
+    if (hue >= 202.5 && hue < 217.5) return "Sky Blue"; // Between
+    if (hue >= 217.5 && hue < 232.5) {
+      return "Azure"; // 240° ± 7.5° (was Sky Blue)
+    }
+    if (hue >= 232.5 && hue < 247.5) return "Blue"; // Between
+    if (hue >= 247.5 && hue < 262.5) return "Blue"; // 270° ± 7.5° (was Blue)
+    if (hue >= 262.5 && hue < 277.5) return "Violet"; // Between
+    if (hue >= 277.5 && hue < 292.5) {
+      return "Purple"; // 300° ± 7.5° (was Purple)
+    }
+    if (hue >= 292.5 && hue < 307.5) return "Magenta"; // Between
+    if (hue >= 307.5 && hue < 322.5) return "Pink"; // 330° ± 7.5° (was Pink)
+    if (hue >= 322.5 && hue < 337.5) return "Rose"; // Between Pink and Red
+    if (hue >= 337.5 && hue < 352.5) return "Crimson"; // Between Red and Pink
+
+    return "Unknown";
   }
 
   int _getTimeLimit() {
@@ -103,6 +132,7 @@ class _TonetrailState extends State<Tonetrail> {
   void _onTimeUp() {
     _timer?.cancel();
     setState(() => _paused = true);
+    _saveGameResult();
 
     showDialog(
       context: context,
@@ -476,6 +506,7 @@ class _TonetrailState extends State<Tonetrail> {
   void _showGameOver() {
     _timer?.cancel();
     setState(() => _paused = true);
+    _saveGameResult();
 
     showDialog(
       context: context,
@@ -593,6 +624,23 @@ class _TonetrailState extends State<Tonetrail> {
               );
             },
           ),
+    );
+  }
+
+  Future<void> _saveGameResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    await _syncService.saveGameResult(
+      userId: user.id,
+      gameType: 'tone trail',
+      stageReached: _stage,
+      score: _totalScore,
+      accuracy: _currentAccuracy(),
+    );
+
+    print(
+      'Game saved! Stage: $_stage, Score: $_totalScore, Accuracy: ${_currentAccuracy()}%',
     );
   }
 

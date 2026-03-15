@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum Difficulty { easy, medium, hard }
 
@@ -12,6 +14,7 @@ class Whotheimp extends StatefulWidget {
 
 class _WhotheimpState extends State<Whotheimp> {
   final Random _random = Random();
+  final SyncService _syncService = SyncService();
 
   bool _debugEasyMode = false; // ← set to false when done testing
 
@@ -75,11 +78,27 @@ class _WhotheimpState extends State<Whotheimp> {
 
     switch (_difficulty) {
       case Difficulty.easy:
-        return max(18 - _stage * 2, 8);
+        // Gentle start: 25° → 20° → 15° → 12° → 10° (stages 1-5)
+        // Then maintain 8° minimum through stage 5
+        if (_stage == 1) return 25;
+        if (_stage == 2) return 20;
+        if (_stage == 3) return 15;
+        if (_stage == 4) return 12;
+        return 10; // stage 5, then 8° after
+
       case Difficulty.medium:
-        return max(12 - (_stage - 5), 4);
+        // Medium stages (6-12): 10° → 8° → 6° → 4°
+        if (_stage <= 8) return 10;
+        if (_stage <= 10) return 8;
+        if (_stage <= 12) return 6;
+        return 5; // before hard kicks in
+
       case Difficulty.hard:
-        return max(6 - (_stage - 12) * .5, 2);
+        // Hard stages (13+): 5° → 4° → 3° → 2°
+        if (_stage <= 15) return 5;
+        if (_stage <= 20) return 4;
+        if (_stage <= 30) return 3;
+        return 2; // maximum difficulty
     }
   }
 
@@ -173,7 +192,23 @@ class _WhotheimpState extends State<Whotheimp> {
 
   // ───── GAME OVER ─────
   void _showGameOver() {
+    _saveGameResult();
     _showEndDialog("Game Over!");
+  }
+
+  Future<void> _saveGameResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    await _syncService.saveGameResult(
+      userId: user.id,
+      gameType: 'hue the impostor',
+      stageReached: _stage,
+      score: _score,
+      accuracy: _accuracy,
+    );
+
+    print('Game saved! Stage: $_stage, Score: $_score, Accuracy: $_accuracy%');
   }
 
   // ───── GAME OVER / END DIALOG ─────

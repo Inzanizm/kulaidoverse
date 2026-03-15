@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Huellision extends StatefulWidget {
   const Huellision({super.key});
@@ -18,6 +20,7 @@ class HuellisionQuestion {
 
 class _HuellisionState extends State<Huellision> {
   final Random _random = Random();
+  final SyncService _syncService = SyncService();
 
   int _stage = 1;
   int _score = 0;
@@ -77,6 +80,12 @@ class _HuellisionState extends State<Huellision> {
   void initState() {
     super.initState();
     _generateQuestion();
+
+    // Start auto-sync when game initializes
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      _syncService.startAutoSync(user.id);
+    }
   }
 
   void _generateQuestion() {
@@ -166,6 +175,8 @@ class _HuellisionState extends State<Huellision> {
   }
 
   void _showGameOver() {
+    _saveGameResult();
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -216,6 +227,21 @@ class _HuellisionState extends State<Huellision> {
             ),
           ),
     );
+  }
+
+  Future<void> _saveGameResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    await _syncService.saveGameResult(
+      userId: user.id,
+      gameType: 'huellision',
+      stageReached: _stage,
+      score: _score,
+      accuracy: _accuracy,
+    );
+
+    print('Game saved! Stage: $_stage, Score: $_score, Accuracy: $_accuracy%');
   }
 
   void _restartGame() {

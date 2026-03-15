@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 /*
 import 'package:vibration/vibration.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -18,6 +20,7 @@ class Huehunt extends StatefulWidget {
 }
 
 class _HuehuntState extends State<Huehunt> {
+  final SyncService _syncService = SyncService();
   // ───── GAME STATE ─────
   late List<Color> _colors;
   List<int> _revealed = [];
@@ -36,6 +39,8 @@ class _HuehuntState extends State<Huehunt> {
   int _hardCompleted = 0;
   int _attempts = 0;
   int _totalScore = 0;
+  int _totalAttempts = 0; // Total across all stages
+  int _totalMatches = 0; // Total successful matches across all stages
 
   // ───── SETTINGS ─────
   bool _soundFX = true;
@@ -294,6 +299,7 @@ class _HuehuntState extends State<Huehunt> {
 
     if (_revealed.length == 2) {
       _attempts++;
+      _totalAttempts++;
 
       final a = _revealed[0];
       final b = _revealed[1];
@@ -303,6 +309,7 @@ class _HuehuntState extends State<Huehunt> {
           if (!mounted) return;
           setState(() {
             _matched.addAll(_revealed);
+            _totalMatches++;
             _revealed.clear();
           });
 
@@ -315,6 +322,12 @@ class _HuehuntState extends State<Huehunt> {
         });
       }
     }
+  }
+
+  // Total accuracy across all stages
+  double _totalAccuracy() {
+    if (_totalAttempts == 0) return 100.0;
+    return min(100, (_totalMatches / _totalAttempts) * 100);
   }
 
   void _checkStageComplete() {
@@ -637,6 +650,11 @@ class _HuehuntState extends State<Huehunt> {
     _timer?.cancel();
     setState(() => _paused = true);
 
+    // Calculate TOTAL accuracy (not stage accuracy)
+    final totalAccuracy = _totalAccuracy();
+
+    _saveGameResult(); // This will now save total accuracy
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -669,9 +687,9 @@ class _HuehuntState extends State<Huehunt> {
                       /// ───── MESSAGE ─────
                       Text(
                         "You reached Stage $_stage\n"
-                        "Accuracy: ${_currentAccuracy().toStringAsFixed(1)}%\n"
+                        "Total Accuracy: ${totalAccuracy.toStringAsFixed(1)}%\n" // CHANGED: Total accuracy
                         "Total Score: $_totalScore",
-                        textAlign: TextAlign.start, // left-aligned
+                        textAlign: TextAlign.start,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.normal,
@@ -685,7 +703,7 @@ class _HuehuntState extends State<Huehunt> {
                       /// ───── ACTION BUTTONS ─────
                       Row(
                         children: [
-                          // Optional: Quit button (LEFT)
+                          // Quit button (LEFT)
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -698,8 +716,8 @@ class _HuehuntState extends State<Huehunt> {
                                 ),
                               ),
                               onPressed: () {
-                                Navigator.pop(context); // close dialog
-                                Navigator.pop(context); // exit game
+                                Navigator.pop(context);
+                                Navigator.pop(context);
                               },
                               child: const Text(
                                 "Quit",
@@ -725,7 +743,7 @@ class _HuehuntState extends State<Huehunt> {
                                 ),
                               ),
                               onPressed: () {
-                                Navigator.pop(context); // close dialog
+                                Navigator.pop(context);
                                 _restartStage();
                               },
                               child: const Text(
@@ -749,6 +767,26 @@ class _HuehuntState extends State<Huehunt> {
     );
   }
 
+  Future<void> _saveGameResult() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    // Use TOTAL accuracy, not stage accuracy
+    final totalAccuracy = _totalAccuracy();
+
+    await _syncService.saveGameResult(
+      userId: user.id,
+      gameType: 'hue hunt',
+      stageReached: _stage,
+      score: _totalScore,
+      accuracy: totalAccuracy, // CHANGED: Now saves total accuracy
+    );
+
+    print(
+      'Game saved! Stage: $_stage, Score: $_totalScore, Total Accuracy: ${totalAccuracy.toStringAsFixed(1)}%',
+    );
+  }
+
   void _restartGame() {
     // Cancel any running timer
     _timer?.cancel();
@@ -762,6 +800,8 @@ class _HuehuntState extends State<Huehunt> {
       _mediumCompleted = 0;
       _hardCompleted = 0;
       _attempts = 0;
+      _totalAttempts = 0;
+      _totalMatches = 0;
 
       // Reset board state
       _matched.clear();
@@ -1136,7 +1176,7 @@ class _HuehuntState extends State<Huehunt> {
                             "1. Memorize the colors.\n"
                             "2. Tap to match pairs.\n"
                             "3. Complete stages before the timer runs out.\n"
-                            "4. Accuracy affects your score and unlocks higher difficulty.",
+                            "4. Accuracy affects your score",
                           ),
                           actions: [
                             TextButton(
@@ -1316,25 +1356,6 @@ class _HuehuntState extends State<Huehunt> {
                         ),
                         const SizedBox(height: 16),
 
-                        /// ───── STAGE PROGRESS ─────
-                        const Center(
-                          child: Text(
-                            "Stage Progress",
-                            style: TextStyle(fontSize: 15),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        LinearProgressIndicator(
-                          value: (_matched.length / _colors.length),
-                          minHeight: 8,
-                          backgroundColor: Colors.grey,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.black,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        const SizedBox(height: 20),
-
                         /// ───── GAME INFO ─────
                         Text(
                           "Stage: $_stage",
@@ -1349,69 +1370,6 @@ class _HuehuntState extends State<Huehunt> {
                         Text(
                           "Remaining Time: ${_formatTime(_timeLeft)}",
                           style: const TextStyle(fontSize: 15),
-                        ),
-                        const SizedBox(height: 20),
-
-                        /// ───── ACCESSIBILITY ─────
-                        const Text(
-                          "Accessibility",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<ColorblindType>(
-                          value: _userColorblindType,
-                          decoration: const InputDecoration(
-                            labelText: "Colorblind Mode",
-                            border: OutlineInputBorder(),
-                          ),
-                          items:
-                              ColorblindType.values.map((type) {
-                                return DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type.name.toUpperCase()),
-                                );
-                              }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setStateDialog(() {
-                                setState(() {});
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 20),
-
-                        /// ───── AUDIO ─────
-                        const Text(
-                          "Audio",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text("Sound FX"),
-                          value: _soundFX,
-                          onChanged: (v) {
-                            setStateDialog(() {
-                              setState(() => _soundFX = v);
-                            });
-                          },
-                        ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text("Music"),
-                          value: _music,
-                          onChanged: (v) {
-                            setStateDialog(() {
-                              setState(() => _music = v);
-                            });
-                          },
                         ),
                         const SizedBox(height: 20),
 

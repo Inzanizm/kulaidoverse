@@ -21,6 +21,7 @@ class _AuthGateState extends State<AuthGate> {
       return HomeScreen(
         userName: user.userMetadata?['full_name'] ?? 'User',
         avatarUrl: user.userMetadata?['avatar_url'] ?? '',
+        userEmail: user.email,
       );
     }
 
