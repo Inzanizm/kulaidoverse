@@ -838,13 +838,16 @@ class _HuellisionState extends State<Huellision> {
               showDialog(
                 context: context,
                 builder:
-                    (_) => const AlertDialog(
-                      title: Text("How to Play"),
-                      content: Text(
-                        "A word appears inside the colored circle.\n"
-                        "Choose the matching word from the options.\n"
-                        "Words are similar and colors get harder each stage.\n"
-                        "You have 3 lives.",
+                    (_) => Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/game_logos/huellision_tutorial.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
               );

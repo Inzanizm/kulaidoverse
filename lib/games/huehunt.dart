@@ -1170,20 +1170,17 @@ class _HuehuntState extends State<Huehunt> {
                   await showDialog(
                     context: context,
                     builder:
-                        (_) => AlertDialog(
-                          title: const Text("How to Play Hue Hunt"),
-                          content: const Text(
-                            "1. Memorize the colors.\n"
-                            "2. Tap to match pairs.\n"
-                            "3. Complete stages before the timer runs out.\n"
-                            "4. Accuracy affects your score",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("OK"),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/huehunt_tutorial.png',
+                              fit: BoxFit.contain,
                             ),
-                          ],
+                          ),
                         ),
                   );
 

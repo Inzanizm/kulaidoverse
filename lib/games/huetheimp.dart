@@ -646,12 +646,16 @@ class _WhotheimpState extends State<Whotheimp> {
                   showDialog(
                     context: context,
                     builder:
-                        (_) => const AlertDialog(
-                          title: Text("How to Play"),
-                          content: Text(
-                            "Tap the circle that has a slightly different hue.\n"
-                            "Avoid mistakes — you only have 5 lives.\n"
-                            "Stages get harder as you progress.",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/huetheimpostor_tutorial.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                   );

@@ -1181,23 +1181,17 @@ class _TonetrailState extends State<Tonetrail> {
                   await showDialog(
                     context: context,
                     builder:
-                        (_) => AlertDialog(
+                        (_) => Dialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          title: const Text("How to Play Tone Trail"),
-                          content: const Text(
-                            "1. Arrange the tones from lightest to darkest.\n\n"
-                            "2. Fill all empty slots before checking.\n\n"
-                            "3. Complete the gradient before time runs out.\n\n"
-                            "4. Stages become harder as tones get closer.",
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Got it"),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/tonetrail_tutorial.png',
+                              fit: BoxFit.contain,
                             ),
-                          ],
+                          ),
                         ),
                   );
 
