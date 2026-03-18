@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:kulaidoverse/learning/lesson.dart';
+import 'package:kulaidoverse/learning/article.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ArticleDetailScreen extends StatelessWidget {
-  final Lesson lesson;
+  final Article article;
 
-  const ArticleDetailScreen({super.key, required this.lesson});
+  const ArticleDetailScreen({super.key, required this.article});
 
   // Function to open URL in browser
   Future<void> _launchURL(String url) async {
@@ -105,7 +105,7 @@ class ArticleDetailScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      lesson.title,
+                      article.title,
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
@@ -119,16 +119,16 @@ class ArticleDetailScreen extends StatelessWidget {
 
               // Article Content
               Text(
-                lesson.content,
+                article.content,
                 style: const TextStyle(height: 1.6, fontSize: 16),
               ),
 
               const SizedBox(height: 20),
 
               // Clickable Link (if exists)
-              if (lesson.linkUrl != null)
+              if (article.linkUrl != null)
                 GestureDetector(
-                  onTap: () => _launchURL(lesson.linkUrl!),
+                  onTap: () => _launchURL(article.linkUrl!),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -154,7 +154,7 @@ class ArticleDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                lesson.linkUrl!,
+                                article.linkUrl!,
                                 style: TextStyle(
                                   color: Colors.blue.shade500,
                                   fontSize: 12,
@@ -173,13 +173,13 @@ class ArticleDetailScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Bottom Images Section
-              if (lesson.bottomImages.isNotEmpty) ...[
+              if (article.bottomImages.isNotEmpty) ...[
                 const Text(
                   'Related Images',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                ...lesson.bottomImages.asMap().entries.map((entry) {
+                ...article.bottomImages.asMap().entries.map((entry) {
                   return _buildImageCard(context, entry.value, entry.key);
                 }),
               ],
