@@ -147,7 +147,7 @@ class GamesScreen extends StatelessWidget {
                       width: double.infinity,
                       child: gameButton(
                         title: "Huellision",
-                        logoPath: "assets/game_logos/huellision_logo.png",
+                        logoPath: "",
                         onPressed: () {
                           Navigator.push(
                             context,

@@ -48,32 +48,32 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
     {
       'key': 'hue hunt',
       'name': 'Hue Hunt',
-      'logo': 'assets/game_logos/huehunt_logo.png',
-      'color': Colors.blue,
+      'logo': 'assets/game_logos/huehunt_dark.png',
+      'color': Colors.black,
     },
     {
       'key': 'tone trail',
       'name': 'Tone Trail',
-      'logo': 'assets/game_logos/tonetrail_logo.png',
-      'color': Colors.purple,
+      'logo': 'assets/game_logos/tonetrail_dark.png',
+      'color': Colors.black,
     },
     {
       'key': 'hue the impostor',
       'name': 'Hue the Impostor',
-      'logo': 'assets/game_logos/huetheimpostor_logo.png',
-      'color': Colors.orange,
+      'logo': 'assets/game_logos/huetheimpostor_dark.png',
+      'color': Colors.black,
     },
     {
       'key': 'color mixing lab',
       'name': 'Color Mixing Lab',
-      'logo': 'assets/game_logos/colormixinglab_logo.png',
-      'color': Colors.green,
+      'logo': 'assets/game_logos/colormixinglab_dark.png',
+      'color': Colors.black,
     },
     {
       'key': 'huellision',
       'name': 'Huellision',
-      'logo': 'assets/game_logos/huellision_logo.png',
-      'color': Colors.red,
+      'logo': '',
+      'color': Colors.black,
     },
   ];
 
@@ -300,14 +300,6 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
     required Color color,
     required GameStat? stat,
   }) {
-    // Grayscale color matrix to make logos black
-    const List<double> blackMatrix = [
-      0.2126, 0.7152, 0.0722, 0, 0, // Red channel (grayscale weights)
-      0.2126, 0.7152, 0.0722, 0, 0, // Green channel
-      0.2126, 0.7152, 0.0722, 0, 0, // Blue channel
-      0, 0, 0, 1, 0, // Alpha preserved
-    ];
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -321,33 +313,27 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
         children: [
           Row(
             children: [
-              // Game Logo Container with colored background
+              // Game Logo Image
               Container(
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(
-                    0.15,
-                  ), // Slightly more opaque for better visibility
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: ColorFiltered(
-                    // Apply grayscale matrix to make logo black
-                    colorFilter: const ColorFilter.matrix(blackMatrix),
-                    child: Image.asset(
-                      logoPath,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback to colored icon if image fails to load
-                        return Icon(
-                          Icons.videogame_asset,
-                          color: color,
-                          size: 32,
-                        );
-                      },
-                    ),
+                  child: Image.asset(
+                    logoPath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to icon if image fails to load
+                      return Icon(
+                        Icons.sports_esports_rounded,
+                        color: color,
+                        size: 32,
+                      );
+                    },
                   ),
                 ),
               ),

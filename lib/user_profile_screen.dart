@@ -1,7 +1,9 @@
 // lib/user_profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kulaidoverse/game_history_screen.dart';
 import 'package:kulaidoverse/game_stats_screen.dart';
+import 'package:kulaidoverse/login_screen.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
 import 'package:kulaidoverse/testing_results_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,7 +20,112 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final SyncService _syncService = SyncService();
-  bool _isLoading = false;
+
+  Future<void> _signOut() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      // Ensure settings are synced before logout
+      await _syncService.syncUserSettings(user.id);
+    }
+
+    try {
+      await GoogleSignIn().signOut();
+    } catch (e) {
+      debugPrint('Google sign-out failed: $e');
+    }
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _showCreditsDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // App Logo
+                  Image.asset('assets/logo/LogoKly.png', width: 80, height: 80),
+                  const SizedBox(height: 16),
+
+                  // App Name
+                  const Text(
+                    'KULAIDOVERSE',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+
+                  // Version
+                  const Text(
+                    'Version 1.0',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Developer Credits Title
+                  const Text(
+                    'Developed By',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Developer Names
+                  _buildDeveloperName('Ma. Romina Andrei Villones'),
+                  _buildDeveloperName('Sean Stephan Miguel Sumugat'),
+                  _buildDeveloperName('Ephraim John San Jose'),
+                  _buildDeveloperName('John Louel Pulumbarit'),
+
+                  const SizedBox(height: 24),
+
+                  // Close Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildDeveloperName(String name) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text(
+        name,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +185,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               const SizedBox(height: 40),
 
               // Menu Buttons
-              // In user_profile_screen.dart, update the Game Stats button:
               _buildMenuButton(
                 icon: Icons.emoji_events_outlined,
                 label: 'Game Stats',
@@ -92,7 +198,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // In user_profile_screen.dart
               _buildMenuButton(
                 icon: Icons.history_outlined,
                 label: 'Game History',
@@ -108,7 +213,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // In user_profile_screen.dart, update the Testing Results button:
               _buildMenuButton(
                 icon: Icons.assignment_outlined,
                 label: 'Testing Results',
@@ -121,6 +225,54 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   );
                 },
               ),
+
+              const Spacer(),
+
+              // Credits Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.black),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _showCreditsDialog,
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text(
+                    'Credits',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Logout Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout),
+                  label: const Text(
+                    'Sign Out',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -163,26 +315,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Text(feature),
-            content: Text('$feature screen coming soon!'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
     );
   }
 }

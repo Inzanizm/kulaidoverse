@@ -7,6 +7,7 @@ import 'package:kulaidoverse/color_info_screen.dart';
 import 'dart:ui' as ui;
 
 import 'package:kulaidoverse/services/local_database.dart';
+import 'package:kulaidoverse/services/sync_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum CameraMode { colorPicker, colorBlindSimulation, colorFilter }
@@ -24,6 +25,8 @@ enum ColorBlindType {
 }
 
 enum FilterColor { red, orange, yellow, green, cyan, blue, purple, pink, brown }
+
+enum CameraQuality { low, medium, high }
 
 const Map<ColorBlindType, List<double>> colorBlindMatrices = {
   ColorBlindType.normal: [
@@ -349,6 +352,16 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   FilterColor _selectedFilterColor = FilterColor.red;
   FlashMode _flashMode = FlashMode.off;
 
+  // Camera quality settings
+  CameraQuality _cameraQuality = CameraQuality.medium;
+  bool _showQualityDropdown = false;
+
+  final List<Map<String, dynamic>> _qualityOptions = [
+    {'label': 'Low Quality', 'value': CameraQuality.low},
+    {'label': 'Medium Quality', 'value': CameraQuality.medium},
+    {'label': 'High Quality', 'value': CameraQuality.high},
+  ];
+
   // For color filter mode
   ui.Image? _filteredImage;
   Timer? _filterTimer;
@@ -409,6 +422,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
   @override
   void initState() {
     super.initState();
+    _loadCameraQuality();
     _initializeCamera();
   }
 
@@ -421,6 +435,78 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     super.dispose();
   }
 
+  Future<void> _loadCameraQuality() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final settings = await LocalDatabase().getUserSettings(user.id);
+      if (settings != null) {
+        switch (settings['camera_quality']) {
+          case 'low':
+            setState(() => _cameraQuality = CameraQuality.low);
+            break;
+          case 'high':
+            setState(() => _cameraQuality = CameraQuality.high);
+            break;
+          case 'medium':
+          default:
+            setState(() => _cameraQuality = CameraQuality.medium);
+        }
+      }
+    }
+  }
+
+  Future<void> _saveCameraQuality(CameraQuality quality) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    String qualityString;
+    switch (quality) {
+      case CameraQuality.low:
+        qualityString = 'low';
+        break;
+      case CameraQuality.high:
+        qualityString = 'high';
+        break;
+      case CameraQuality.medium:
+        qualityString = 'medium';
+    }
+
+    // Save to local database (marked as unsynced)
+    await LocalDatabase().saveUserSettings({
+      'user_id': user.id,
+      'camera_quality': qualityString,
+      'updated_at': DateTime.now().toIso8601String(),
+      'is_synced': 0,
+    });
+
+    setState(() => _cameraQuality = quality);
+
+    // Try to sync immediately if online
+    final syncService = SyncService();
+    if (await syncService.isOnline()) {
+      await syncService.syncUserSettings(user.id);
+    }
+
+    // Reinitialize camera with new quality
+    await _reinitializeCamera();
+  }
+
+  Future<void> _reinitializeCamera() async {
+    if (_controller == null) return;
+
+    try {
+      await _controller!.stopImageStream();
+    } catch (_) {}
+
+    final oldController = _controller;
+    _controller = null;
+    setState(() => _isReady = false);
+
+    await oldController?.dispose();
+
+    await _initializeCamera();
+  }
+
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     final back = cameras.firstWhere(
@@ -428,30 +514,21 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       orElse: () => cameras.first,
     );
 
-    // Load camera quality from settings
-    final user = Supabase.instance.client.auth.currentUser;
-    ResolutionPreset resolution = ResolutionPreset.medium;
-
-    if (user != null) {
-      final settings = await LocalDatabase().getUserSettings(user.id);
-      if (settings != null) {
-        switch (settings['camera_quality']) {
-          case 'low':
-            resolution = ResolutionPreset.low;
-            break;
-          case 'high':
-            resolution = ResolutionPreset.high;
-            break;
-          case 'medium':
-          default:
-            resolution = ResolutionPreset.medium;
-        }
-      }
+    ResolutionPreset resolution;
+    switch (_cameraQuality) {
+      case CameraQuality.low:
+        resolution = ResolutionPreset.low;
+        break;
+      case CameraQuality.high:
+        resolution = ResolutionPreset.high;
+        break;
+      case CameraQuality.medium:
+        resolution = ResolutionPreset.medium;
     }
 
     _controller = CameraController(
       back,
-      resolution, // Use the loaded resolution
+      resolution,
       imageFormatGroup: ImageFormatGroup.yuv420,
       enableAudio: false,
     );
@@ -733,7 +810,7 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       // Initialize new controller
       final cam = CameraController(
         newDescription,
-        ResolutionPreset.medium,
+        _getResolutionPreset(),
         imageFormatGroup: ImageFormatGroup.yuv420,
         enableAudio: false,
       );
@@ -757,6 +834,17 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
       debugPrint("Camera switch error: $e");
     } finally {
       _isSwitching = false;
+    }
+  }
+
+  ResolutionPreset _getResolutionPreset() {
+    switch (_cameraQuality) {
+      case CameraQuality.low:
+        return ResolutionPreset.low;
+      case CameraQuality.high:
+        return ResolutionPreset.high;
+      case CameraQuality.medium:
+        return ResolutionPreset.medium;
     }
   }
 
@@ -1265,203 +1353,275 @@ class _ColorCameraScreenState extends State<ColorCameraScreen> {
     }
   }
 
+  Widget _buildQualityDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white54),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<CameraQuality>(
+          value: _cameraQuality,
+          icon: const Icon(
+            Icons.arrow_drop_down,
+            color: Colors.white,
+            size: 20,
+          ),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          dropdownColor: const Color(0xFF222222),
+          items:
+              _qualityOptions.map((option) {
+                return DropdownMenuItem<CameraQuality>(
+                  value: option['value'],
+                  child: Text(
+                    option['label'],
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                );
+              }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              _saveCameraQuality(value);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          if (_isReady && _controller != null)
-            _cameraWithFilters()
-          else
-            Container(color: Colors.black),
+    return GestureDetector(
+      // Close dropdown when tapping outside
+      onTap: () {
+        if (_showQualityDropdown) {
+          setState(() => _showQualityDropdown = false);
+        }
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            if (_isReady && _controller != null)
+              _cameraWithFilters()
+            else
+              Container(color: Colors.black),
 
-          // Crosshair overlay
-          if (_currentMode == CameraMode.colorPicker)
-            Center(
-              child: CustomPaint(
-                painter: _CrosshairPainter(),
-                child: const SizedBox(width: 240, height: 240),
+            // Top right settings/quality control
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child:
+                      _showQualityDropdown
+                          ? _buildQualityDropdown()
+                          : IconButton(
+                            icon: const Icon(
+                              Icons.settings,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() => _showQualityDropdown = true);
+                            },
+                          ),
+                ),
               ),
             ),
 
-          // TWO-PANEL BOTTOM UI
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ───────────────────────────────
-                // TOP PANEL — Color Info (transparent, NO rounded corners)
-                // ───────────────────────────────
-                if (_currentMode == CameraMode.colorPicker)
-                  Container(
-                    width: double.infinity,
-                    height: 160,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                    child: Row(
-                      children: [
-                        // Color swatch
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: _currentColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _colorName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text("HEX: $_hex"),
-                              Text("RGB: $_rgb"),
-                              Text("CMYK: $_cmyk"),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+            // Crosshair overlay
+            if (_currentMode == CameraMode.colorPicker)
+              Center(
+                child: CustomPaint(
+                  painter: _CrosshairPainter(),
+                  child: const SizedBox(width: 240, height: 240),
+                ),
+              ),
 
-                // ───────────────────────────────
-                // BOTTOM PANEL — Camera Buttons
-                // Black background, white icons, rounded top corners
-                // ───────────────────────────────
-                Container(
-                  width: double.infinity,
-                  height: 160,
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(18),
-                      topRight: Radius.circular(18),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // TOP ROW (mode + flash)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // TWO-PANEL BOTTOM UI
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ───────────────────────────────
+                  // TOP PANEL — Color Info (transparent, NO rounded corners)
+                  // ───────────────────────────────
+                  if (_currentMode == CameraMode.colorPicker)
+                    Container(
+                      width: double.infinity,
+                      height: 160,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                      child: Row(
                         children: [
-                          // MODE DROPDOWN (LEFT)
-                          PopupMenuButton<CameraMode>(
-                            color: const Color(0xFF222222),
-                            initialValue: _currentMode,
-                            onSelected: (mode) async {
-                              if (mode == CameraMode.colorFilter) {
-                                await _ensureBackCamera();
-                              }
-
-                              setState(() {
-                                _currentMode = mode;
-
-                                _isFrozen = false;
-                                _frozenFrame = null;
-
-                                if (mode != CameraMode.colorFilter) {
-                                  _filteredImage?.dispose();
-                                  _filteredImage = null;
-                                }
-                              });
-                            },
-
-                            itemBuilder:
-                                (context) => [
-                                  _modeItem(
-                                    CameraMode.colorPicker,
-                                    'Color Picker',
-                                  ),
-                                  _modeItem(
-                                    CameraMode.colorBlindSimulation,
-                                    'Colorblind Simulation',
-                                  ),
-                                  _modeItem(
-                                    CameraMode.colorFilter,
-                                    'Color Filter',
-                                  ),
-                                ],
-
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white54),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    _modeLabel,
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.arrow_drop_down,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
+                          // Color swatch
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: _currentColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.black12),
                             ),
                           ),
-
-                          // FLASH BUTTON (RIGHT)
-                          Builder(
-                            builder: (context) {
-                              final isFront =
-                                  _controller?.description.lensDirection ==
-                                  CameraLensDirection.front;
-
-                              return IconButton(
-                                icon: Icon(
-                                  _flashMode == FlashMode.off
-                                      ? Icons.flash_off
-                                      : Icons.flash_on,
-                                  color:
-                                      isFront
-                                          ? Colors.grey
-                                          : (_flashMode == FlashMode.off
-                                              ? Colors.white
-                                              : Colors.yellow),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _colorName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                onPressed: isFront ? null : _toggleFlash,
-                              );
-                            },
+                                const SizedBox(height: 6),
+                                Text("HEX: $_hex"),
+                                Text("RGB: $_rgb"),
+                                Text("CMYK: $_cmyk"),
+                              ],
+                            ),
                           ),
                         ],
                       ),
+                    ),
 
-                      const SizedBox(height: 12),
+                  // ───────────────────────────────
+                  // BOTTOM PANEL — Camera Buttons
+                  // Black background, white icons, rounded top corners
+                  // ───────────────────────────────
+                  Container(
+                    width: double.infinity,
+                    height: 160,
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(18),
+                        topRight: Radius.circular(18),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // TOP ROW (mode + flash)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // MODE DROPDOWN (LEFT)
+                            PopupMenuButton<CameraMode>(
+                              color: const Color(0xFF222222),
+                              initialValue: _currentMode,
+                              onSelected: (mode) async {
+                                if (mode == CameraMode.colorFilter) {
+                                  await _ensureBackCamera();
+                                }
 
-                      // CAMERA CONTROLS
-                      Expanded(child: _buildBottomControls()),
-                    ],
+                                setState(() {
+                                  _currentMode = mode;
+
+                                  _isFrozen = false;
+                                  _frozenFrame = null;
+
+                                  if (mode != CameraMode.colorFilter) {
+                                    _filteredImage?.dispose();
+                                    _filteredImage = null;
+                                  }
+                                });
+                              },
+
+                              itemBuilder:
+                                  (context) => [
+                                    _modeItem(
+                                      CameraMode.colorPicker,
+                                      'Color Picker',
+                                    ),
+                                    _modeItem(
+                                      CameraMode.colorBlindSimulation,
+                                      'Colorblind Simulation',
+                                    ),
+                                    _modeItem(
+                                      CameraMode.colorFilter,
+                                      'Color Filter',
+                                    ),
+                                  ],
+
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white54),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      _modeLabel,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // FLASH BUTTON (RIGHT)
+                            Builder(
+                              builder: (context) {
+                                final isFront =
+                                    _controller?.description.lensDirection ==
+                                    CameraLensDirection.front;
+
+                                return IconButton(
+                                  icon: Icon(
+                                    _flashMode == FlashMode.off
+                                        ? Icons.flash_off
+                                        : Icons.flash_on,
+                                    color:
+                                        isFront
+                                            ? Colors.grey
+                                            : (_flashMode == FlashMode.off
+                                                ? Colors.white
+                                                : Colors.yellow),
+                                  ),
+                                  onPressed: isFront ? null : _toggleFlash,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // CAMERA CONTROLS
+                        Expanded(child: _buildBottomControls()),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
