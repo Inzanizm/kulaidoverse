@@ -4,7 +4,6 @@ import 'package:kulaidoverse/learning/kulaiticle.dart';
 import 'package:kulaidoverse/testing/testing_screen.dart';
 import 'package:kulaidoverse/user_profile_screen.dart';
 import 'color_camera_screen.dart';
-import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String? userName;
@@ -23,7 +22,7 @@ class HomeScreen extends StatelessWidget {
             // 🔹 Top Bar
             Container(
               decoration: const BoxDecoration(
-                color: Colors.white, // or your preferred color
+                color: Colors.white,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -40,8 +39,6 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // In home_screen.dart, update the CircleAvatar in the top bar:
-
                   // Profile Picture - Now tappable
                   GestureDetector(
                     onTap: () {
@@ -68,37 +65,30 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // App Logo and Name
-                  Column(
-                    children: [
-                      Image.asset(
-                        'assets/logo/kulaidoverse_logo.jpg',
-                        height: 32,
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'KULAIDOVERSE',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.2,
+                  // App Logo and Name - CENTERED
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/logo/kulaidoverse_logo.jpg',
+                          height: 32,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        const Text(
+                          'KULAIDOVERSE',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  // Settings Button
-                  IconButton(
-                    icon: const Icon(Icons.settings, size: 26),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  // Empty space to balance the layout (same width as avatar)
+                  const SizedBox(width: 44), // 22 radius * 2 = 44
                 ],
               ),
             ),
@@ -196,7 +186,7 @@ class HomeScreen extends StatelessWidget {
   Widget _buildDashboardCard({
     required IconData icon,
     required String label,
-    VoidCallback? onTap, // 🔹 Added this
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -212,7 +202,7 @@ class HomeScreen extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap, // 🔹 Changed this line
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

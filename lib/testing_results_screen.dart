@@ -194,38 +194,38 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
     switch (status) {
       case 'Normal':
       case 'Normal Color Vision':
-        return Colors.green;
+        return Colors.black;
       case 'Mild':
       case 'Mild Deficiency':
       case 'Mild Color Blindness':
-        return Colors.yellow.shade700;
+        return Colors.black;
       case 'Moderate':
       case 'Moderate Deficiency':
       case 'Moderate Color Blindness':
-        return Colors.orange;
+        return Colors.black;
       case 'Severe':
       case 'Severe Deficiency':
       case 'Severe Color Blindness':
-        return Colors.red;
+        return Colors.black;
       case 'Monochromacy':
-        return Colors.purple;
+        return Colors.black;
       default:
-        return Colors.grey;
+        return Colors.black;
     }
   }
 
   IconData _getTestIcon(String testType) {
     switch (testType) {
       case 'ishihara':
-        return Icons.visibility;
+        return Icons.remove_red_eye;
       case 'd15':
-        return Icons.color_lens;
+        return Icons.view_agenda;
       case 'hrr':
-        return Icons.grid_4x4;
+        return Icons.bubble_chart;
       case 'mosaic':
-        return Icons.apps;
+        return Icons.grid_on;
       case 'lantern':
-        return Icons.traffic;
+        return Icons.circle;
       default:
         return Icons.assignment;
     }
@@ -583,7 +583,7 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                     'Rating',
                     '${result.overallRating.toStringAsFixed(1)}%',
                     Icons.score,
-                    Colors.blue,
+                    Colors.black,
                   ),
                 ),
                 // Status
@@ -627,7 +627,7 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
               'Recommendation',
               result.recommendation,
               Icons.lightbulb_outline,
-              Colors.amber,
+              Colors.black,
             ),
             const SizedBox(height: 12),
 
@@ -689,17 +689,17 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
   Color _getTestColor(String testType) {
     switch (testType) {
       case 'ishihara':
-        return Colors.red;
+        return Colors.black;
       case 'd15':
-        return Colors.blue;
+        return Colors.black;
       case 'hrr':
-        return Colors.purple;
+        return Colors.black;
       case 'mosaic':
-        return Colors.orange;
+        return Colors.black;
       case 'lantern':
-        return Colors.green;
+        return Colors.black;
       default:
-        return Colors.grey;
+        return Colors.black;
     }
   }
 }

@@ -262,13 +262,6 @@ class _LearningScreenState extends State<LearningScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _discoverCard(),
-        const SizedBox(height: 24),
-        const Text(
-          'Articles',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
         Expanded(
           child: GridView.builder(
             itemCount: articlesData.length,
@@ -284,37 +277,6 @@ class _LearningScreenState extends State<LearningScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _discoverCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Discover Topics',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Find your articles',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.school, size: 48),
-        ],
-      ),
     );
   }
 

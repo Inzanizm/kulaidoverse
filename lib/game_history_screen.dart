@@ -193,15 +193,15 @@ class _GameHistoryScreenState extends State<GameHistoryScreen> {
   String _getGameLogoPath(String gameType) {
     switch (gameType) {
       case 'hue hunt':
-        return 'assets/game_logos/huehunt_logo.png';
+        return 'assets/game_logos/huehunt_dark.png';
       case 'tone trail':
-        return 'assets/game_logos/tonetrail_logo.png';
+        return 'assets/game_logos/tonetrail_dark.png';
       case 'hue the impostor':
-        return 'assets/game_logos/huetheimpostor_logo.png';
+        return 'assets/game_logos/huetheimpostor_dark.png';
       case 'color mixing lab':
-        return 'assets/game_logos/colormixinglab_logo.png';
+        return 'assets/game_logos/colormixinglab_dark.png';
       case 'huellision':
-        return 'assets/game_logos/huellision_logo.png';
+        return '';
       default:
         return 'assets/game_logos/huehunt_logo.png';
     }
@@ -498,6 +498,7 @@ class _GameHistoryScreenState extends State<GameHistoryScreen> {
   Widget _buildHistoryCard(GameHistory game) {
     final color = _getGameColor(game.gameType);
     final logoPath = _getGameLogoPath(game.gameType);
+    final isHuellision = game.gameType == 'huellision';
 
     return Container(
       decoration: BoxDecoration(
@@ -529,15 +530,34 @@ class _GameHistoryScreenState extends State<GameHistoryScreen> {
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: ColorFiltered(
-                    colorFilter: const ColorFilter.matrix([
-                      0.2126, 0.7152, 0.0722, 0, 0, // Red channel (grayscale)
-                      0.2126, 0.7152, 0.0722, 0, 0, // Green channel (grayscale)
-                      0.2126, 0.7152, 0.0722, 0, 0, // Blue channel (grayscale)
-                      0, 0, 0, 1, 0, // Alpha channel
-                    ]),
-                    child: Image.asset(logoPath, fit: BoxFit.contain),
-                  ),
+                  child:
+                      isHuellision
+                          ? Icon(
+                            Icons.sports_esports_rounded,
+                            color: Colors.black,
+                            size: 24,
+                          )
+                          : ColorFiltered(
+                            colorFilter: const ColorFilter.matrix([
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0, // Red channel (grayscale)
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0, // Green channel (grayscale)
+                              0.2126,
+                              0.7152,
+                              0.0722,
+                              0,
+                              0, // Blue channel (grayscale)
+                              0, 0, 0, 1, 0, // Alpha channel
+                            ]),
+                            child: Image.asset(logoPath, fit: BoxFit.contain),
+                          ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -618,15 +638,15 @@ class _GameHistoryScreenState extends State<GameHistoryScreen> {
   Color _getGameColor(String gameType) {
     switch (gameType) {
       case 'hue hunt':
-        return Colors.blue;
+        return Colors.black;
       case 'tone trail':
-        return Colors.purple;
+        return Colors.black;
       case 'hue the impostor':
-        return Colors.orange;
+        return Colors.black;
       case 'color mixing lab':
-        return Colors.green;
+        return Colors.black;
       case 'huellision':
-        return Colors.red;
+        return Colors.black;
       default:
         return Colors.grey;
     }
