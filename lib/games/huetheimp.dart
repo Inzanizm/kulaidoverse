@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum Difficulty { easy, medium, hard }
@@ -585,7 +586,7 @@ class _WhotheimpState extends State<Whotheimp> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -627,7 +628,7 @@ class _WhotheimpState extends State<Whotheimp> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -667,7 +668,7 @@ class _WhotheimpState extends State<Whotheimp> {
             Container(
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -856,74 +857,6 @@ class _WhotheimpState extends State<Whotheimp> {
                           "Lives Remaining: $_lives",
                           style: const TextStyle(fontSize: 15),
                         ),
-
-                        const SizedBox(height: 22),
-
-                        /// ───── ACCESSIBILITY ─────
-                        const Text(
-                          "Accessibility",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    DropdownButtonFormField<ColorblindType>(
-                      value: _userColorblindType,
-                      decoration: const InputDecoration(
-                        labelText: "Colorblind Mode",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ColorblindType.values.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.name.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setStateDialog(() {
-                            setState(() => _userColorblindType = value);
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-*/
-                        /// ───── AUDIO ─────
-                        const Text(
-                          "Audio",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Sound FX"),
-                      value: _soundFX,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _soundFX = v);
-                        });
-                      },
-                    ),
-
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Music"),
-                      value: _music,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _music = v);
-                        });
-                      },
-                    ),
-                     */
                         const SizedBox(height: 22),
 
                         /// ───── ACTION BUTTONS ─────

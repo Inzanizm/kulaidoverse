@@ -312,11 +312,6 @@ class _LearningScreenState extends State<LearningScreen> {
               ),
             ),
             const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              article.subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppTheme.lightGrey, fontSize: 11),
-            ),
           ],
         ),
       ),

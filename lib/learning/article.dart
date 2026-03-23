@@ -1,14 +1,12 @@
 // models/article.dart
 class Article {
   final String title;
-  final String subtitle;
   final String content;
   final String? linkUrl; // Optional external link
   final List<String> bottomImages; // Images to show at bottom of article
 
   const Article({
     required this.title,
-    required this.subtitle,
     required this.content,
     this.linkUrl,
     this.bottomImages = const [],
@@ -19,7 +17,6 @@ class Article {
 final List<Article> articlesData = [
   Article(
     title: 'How Humans See Color',
-    subtitle: 'Read Article',
     content: '''
 Color plays an important role in our daily lives—it helps us recognize objects, affects our emotions, and even influences our choices. Surprisingly, objects themselves do not actually have color. Instead, color is created by the way light interacts with objects and how our eyes and brain interpret that light.
 
@@ -44,7 +41,6 @@ To learn more about how humans see color, you can read the full article from the
   ),
   Article(
     title: 'Understanding Color Vision Deficiency',
-    subtitle: 'Read Article',
     content: '''
 Color vision deficiency is a condition that affects a person’s ability to distinguish certain shades of color. It is often called “color blindness,” although complete color blindness is very rare. Most people with this condition can still see colors but may have difficulty telling some colors apart.
 
@@ -66,7 +62,6 @@ For more detailed information about color vision deficiency, you can read the fu
   ),
   Article(
     title: 'Types of Color Blindness',
-    subtitle: 'Read Article',
     content: '''
 Color blindness, also known as color vision deficiency, occurs when the cone cells in the retina do not function normally. Cone cells are responsible for detecting red, green, and blue light, which the brain combines to create the full range of colors we see. When one or more types of cones are missing or not working correctly, a person may have difficulty distinguishing certain colors.
 
@@ -92,7 +87,6 @@ To learn more about the different types of color blindness, you can read the ful
   ),
   Article(
     title: 'Living with Color Vision Deficiency',
-    subtitle: 'Read Article',
     content: '''
 Living with color vision deficiency can present many everyday challenges that people with normal color vision may not notice. Simple activities such as choosing clothes, cooking food, gardening, driving, or using everyday technology can become difficult when colors are hard to distinguish. In some cases, color vision deficiency can even lead to safety issues, such as misreading warning lights or failing to notice sunburn.
 
@@ -116,7 +110,6 @@ To learn more about the experiences and challenges of living with color vision d
   ),
   Article(
     title: 'Why Color Contrast Accessibility Matters',
-    subtitle: 'Read Article',
     content: '''
 Color contrast accessibility plays a vital role in creating inclusive and user-friendly websites and digital platforms. While many organizations focus on color contrast to meet accessibility laws and standards, its importance goes far beyond legal compliance. Proper color contrast helps remove barriers for people with disabilities and ensures that everyone can navigate and understand digital content with ease.
 
@@ -135,7 +128,6 @@ To read more about color contrast accessibility and why it matters, you can visi
   ),
   Article(
     title: 'Color Vision Deficiency in Education',
-    subtitle: 'Read Article',
     content: '''
 Color vision deficiency can significantly affect a child’s learning experience in school, especially because color is widely used in classrooms and educational materials. Teachers often rely on color to highlight key points, organize information, mark work, and create engaging learning environments. For students with color vision deficiency, this heavy reliance on color can create barriers to understanding and participation.
 

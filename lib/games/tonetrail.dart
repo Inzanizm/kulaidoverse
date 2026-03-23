@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Tonetrail extends StatefulWidget {
@@ -1127,7 +1128,7 @@ class _TonetrailState extends State<Tonetrail> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -1168,7 +1169,7 @@ class _TonetrailState extends State<Tonetrail> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: IconButton(
@@ -1205,7 +1206,7 @@ class _TonetrailState extends State<Tonetrail> {
             Container(
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: IconButton(
@@ -1457,158 +1458,143 @@ class _TonetrailState extends State<Tonetrail> {
                   padding: const EdgeInsets.all(20),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
-                      maxWidth: 380, // limit width for wide screens
+                      maxWidth: 380,
+                      maxHeight: 500,
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          /// ───── TITLE ─────
-                          const Center(
-                            child: Text(
-                              "Game Paused",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          /// ───── GAME STATS ─────
-                          Text(
-                            "Stage: $_stage",
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Accuracy: ${_currentAccuracy().toStringAsFixed(1)}%",
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Remaining Time: ${_formatTime(_timeLeft)}",
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                          const SizedBox(height: 22),
-
-                          /// ───── ACCESSIBILITY ─────
-                          const Text(
-                            "Accessibility",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          /// ───── AUDIO ─────
-                          const Text(
-                            "Audio",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          const SizedBox(height: 22),
-
-                          /// ───── ACTION BUTTONS ─────
-                          Column(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          // ADDED: Right padding to create space for scrollbar
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              /// Resume Game
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 2,
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _startTimer(
-                                    reset: false,
-                                  ); // resume timer instead of resetting
-                                  setState(() => _paused = false);
-                                },
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text(
-                                  "Resume",
+                              /// ───── TITLE ─────
+                              const Center(
+                                child: Text(
+                                  "Game Paused",
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
 
-                              /// Retry Stage
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 2,
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  resetGame(); // retry current stage
-                                },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text(
-                                  "Retry Stage",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                              const SizedBox(height: 18),
+
+                              /// ───── GAME STATS ─────
+                              Text(
+                                "Stage: $_stage",
+                                style: const TextStyle(fontSize: 15),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Accuracy: ${_currentAccuracy().toStringAsFixed(1)}%",
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Remaining Time: ${_formatTime(_timeLeft)}",
+                                style: const TextStyle(fontSize: 15),
+                              ),
 
-                              /// Restart Game (confirmation)
-                              OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: Colors.black54,
-                                    width: 1.5,
+                              const SizedBox(height: 22),
+
+                              /// ───── ACTION BUTTONS ─────
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  /// Resume Game
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _startTimer(reset: false);
+                                      setState(() => _paused = false);
+                                    },
+                                    icon: const Icon(Icons.play_arrow),
+                                    label: const Text(
+                                      "Resume",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                                  const SizedBox(height: 12),
+
+                                  /// Retry Stage
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      resetGame();
+                                    },
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text(
+                                      "Retry Stage",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                  const SizedBox(height: 12),
+
+                                  /// Restart Game (confirmation)
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                        color: Colors.black54,
+                                        width: 1.5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _confirmRestartGame();
+                                    },
+                                    icon: const Icon(Icons.restart_alt),
+                                    label: const Text(
+                                      "Restart Game",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _confirmRestartGame();
-                                },
-                                icon: const Icon(Icons.restart_alt),
-                                label: const Text(
-                                  "Restart Game",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

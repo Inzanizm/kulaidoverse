@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ColorMixLab extends StatefulWidget {
@@ -316,73 +317,6 @@ class _ColorMixLabState extends State<ColorMixLab> {
 
                         const SizedBox(height: 22),
 
-                        /// ───── ACCESSIBILITY ─────
-                        const Text(
-                          "Accessibility",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    DropdownButtonFormField<ColorblindType>(
-                      value: _userColorblindType,
-                      decoration: const InputDecoration(
-                        labelText: "Colorblind Mode",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ColorblindType.values.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.name.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setStateDialog(() {
-                            setState(() => _userColorblindType = value);
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-*/
-                        /// ───── AUDIO ─────
-                        const Text(
-                          "Audio",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Sound FX"),
-                      value: _soundFX,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _soundFX = v);
-                        });
-                      },
-                    ),
-
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Music"),
-                      value: _music,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _music = v);
-                        });
-                      },
-                    ),
-                     */
-                        const SizedBox(height: 22),
-
                         /// ───── ACTION BUTTONS ─────
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -475,7 +409,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -517,7 +451,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -557,7 +491,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
             Container(
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -581,13 +515,13 @@ class _ColorMixLabState extends State<ColorMixLab> {
 
         body: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             const Text(
               "Color Mixing Lab",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
             Text(
               "Stage $_stage",
               style: const TextStyle(
@@ -597,7 +531,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ClipRRect(
@@ -610,7 +544,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             /// Hearts
             AnimatedContainer(
@@ -639,7 +573,7 @@ class _ColorMixLabState extends State<ColorMixLab> {
                 }),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 58),
 
             /// Question Card
             Center(

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Huellision extends StatefulWidget {
@@ -189,35 +190,91 @@ class _HuellisionState extends State<Huellision> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    "Game Over!",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  /// ───── TITLE ─────
+                  const Center(
+                    child: Text(
+                      "Game Over!",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
+
                   const SizedBox(height: 16),
-                  Text("Stage reached: $_stage"),
-                  Text("Score: $_score"),
-                  Text("Accuracy: ${_accuracy.toStringAsFixed(1)}%"),
+
+                  /// ───── MESSAGE ─────
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Stage reached: $_stage\n"
+                      "Accuracy: ${_accuracy.toStringAsFixed(1)}%\n"
+                      "Score: $_score",
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                        height: 1.4,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
+
+                  /// ───── ACTION BUTTONS ─────
                   Row(
                     children: [
+                      // Exit Button (LEFT - White)
                       Expanded(
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                           onPressed: () {
                             Navigator.pop(context);
                             Navigator.pop(context);
                           },
-                          child: const Text("Exit"),
+                          child: const Text(
+                            "Exit",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
+
+                      // Restart Button (RIGHT - Black)
                       Expanded(
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                           onPressed: () {
                             Navigator.pop(context);
                             _restartGame();
                           },
-                          child: const Text("Restart"),
+                          child: const Text(
+                            "Restart",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -428,73 +485,6 @@ class _HuellisionState extends State<Huellision> {
                           style: const TextStyle(fontSize: 15),
                         ),
 
-                        const SizedBox(height: 22),
-
-                        /// ───── ACCESSIBILITY ─────
-                        const Text(
-                          "Accessibility",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    DropdownButtonFormField<ColorblindType>(
-                      value: _userColorblindType,
-                      decoration: const InputDecoration(
-                        labelText: "Colorblind Mode",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ColorblindType.values.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.name.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setStateDialog(() {
-                            setState(() => _userColorblindType = value);
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-*/
-                        /// ───── AUDIO ─────
-                        const Text(
-                          "Audio",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        /*
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Sound FX"),
-                      value: _soundFX,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _soundFX = v);
-                        });
-                      },
-                    ),
-
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Music"),
-                      value: _music,
-                      onChanged: (v) {
-                        setStateDialog(() {
-                          setState(() => _music = v);
-                        });
-                      },
-                    ),
-                     */
                         const SizedBox(height: 22),
 
                         /// ───── ACTION BUTTONS ─────
@@ -777,7 +767,7 @@ class _HuellisionState extends State<Huellision> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: const Color(0xFF283238),
+            color: AppTheme.pureBlack,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
@@ -819,7 +809,7 @@ class _HuellisionState extends State<Huellision> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: const Color(0xFF283238),
+            color: AppTheme.pureBlack,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
@@ -859,7 +849,7 @@ class _HuellisionState extends State<Huellision> {
         Container(
           margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF283238),
+            color: AppTheme.pureBlack,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
@@ -890,7 +880,7 @@ class _HuellisionState extends State<Huellision> {
       width: 320,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xff3c3f45),
+        color: const Color(0xFF2E2E35),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
@@ -911,6 +901,7 @@ class _HuellisionState extends State<Huellision> {
           const SizedBox(height: 20),
           Wrap(
             spacing: 12,
+            runSpacing: 12,
             alignment: WrapAlignment.center,
             children: question.choices.map(_answerButton).toList(),
           ),
@@ -928,12 +919,22 @@ class _HuellisionState extends State<Huellision> {
         color: _backgroundColor,
       ),
       alignment: Alignment.center,
-      child: Text(
-        word,
-        style: TextStyle(
-          fontSize: 34,
-          fontWeight: FontWeight.bold,
-          color: _wordColor,
+      child: Padding(
+        padding: const EdgeInsets.all(
+          20,
+        ), // Add padding so text doesn't touch edges
+        child: FittedBox(
+          // Auto-scales text to fit
+          fit: BoxFit.scaleDown, // Only scale down, not up
+          child: Text(
+            word,
+            style: TextStyle(
+              fontSize: 34, // Max font size
+              fontWeight: FontWeight.bold,
+              color: _wordColor, // Better contrast on colored backgrounds
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
@@ -944,12 +945,22 @@ class _HuellisionState extends State<Huellision> {
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.green : const Color(0xff4a4d52),
+        backgroundColor: isSelected ? Colors.black : const Color(0xff4a4d52),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        elevation: isSelected ? 4 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.3),
       ),
       onPressed: () => setState(() => selectedAnswer = text),
-      child: Text(text, style: const TextStyle(color: Colors.white)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 

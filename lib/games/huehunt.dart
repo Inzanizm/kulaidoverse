@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 /*
 import 'package:vibration/vibration.dart';
@@ -1108,7 +1109,7 @@ class _HuehuntState extends State<Huehunt> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 40, 50, 56),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -1148,7 +1149,7 @@ class _HuehuntState extends State<Huehunt> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -1194,7 +1195,7 @@ class _HuehuntState extends State<Huehunt> {
             Container(
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
