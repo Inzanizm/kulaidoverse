@@ -1,4 +1,6 @@
+// lib/testing/testing_screen.dart
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'lanterntest.dart';
 import 'ishihara.dart';
 import 'd15.dart';
@@ -10,191 +12,264 @@ class TestingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 360;
+    final isTablet = size.width > 600;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 6,
-        shadowColor: Colors.black.withOpacity(0.5),
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 40, 50, 56),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+      backgroundColor: AppTheme.pureWhite,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Unified App Bar (same style as HomeScreen)
+            _buildAppBar(context),
+
+            const SizedBox(height: AppTheme.spaceLg),
+
+            // Title Section
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? AppTheme.spaceMd : AppTheme.spaceLg,
+              ),
+              child: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("Testing", style: AppTheme.screenTitle),
+              ),
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+
+            const SizedBox(height: AppTheme.spaceLg),
+
+            // Tests Grid
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal:
+                      isSmallScreen ? AppTheme.spaceMd : AppTheme.spaceLg,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child:
+                          isTablet
+                              ? _buildTabletLayout(context)
+                              : _buildMobileLayout(context),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppTheme.spaceMd),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.pureWhite,
+        boxShadow: AppTheme.shadowLow,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spaceMd,
+        vertical: AppTheme.spaceSm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back Button (square style like original, but using theme colors)
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.softBlack,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios,
+                color: AppTheme.pureWhite,
+                size: 18,
+              ),
             ),
           ),
-        ),
-        centerTitle: true,
-        title: Column(
+
+          // Center Logo & Title (same as HomeScreen)
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+                const SizedBox(height: AppTheme.spaceXs),
+                const Text("KULAIDOVERSE", style: AppTheme.appName),
+              ],
+            ),
+          ),
+
+          // Balance spacer (same width as back button)
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Column(
+      children: [
+        Row(
           children: [
-            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-            const SizedBox(height: 4),
-            const Text(
-              "KULAIDOVERSE",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+            Expanded(
+              child: _buildTestCard(
+                title: "Ishihara-Test",
+                icon: Icons.remove_red_eye,
+                onPressed: () => _navigateTo(context, const IshiharaScreen()),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: _buildTestCard(
+                title: "D-15 Test",
+                icon: Icons.view_agenda,
+                onPressed: () => _navigateTo(context, D15TestScreen()),
               ),
             ),
           ],
         ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
+        const SizedBox(height: AppTheme.spaceMd),
+        Row(
           children: [
-            const SizedBox(height: 10),
-            const Text(
-              "Testing",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 25),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: testButton(
-                            title: "Ishihara-Test",
-                            icon: Icons.remove_red_eye,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const IshiharaScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: testButton(
-                            title: "D-15 Test",
-                            icon: Icons.view_agenda,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => D15TestScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: testButton(
-                            title: "Mosaic Test",
-                            icon: Icons.grid_on,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const mosaic(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: testButton(
-                            title: "Lantern Test",
-                            icon: Icons.circle,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const Lanterntest(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: testButton(
-                        title: "HRR-Test",
-                        icon: Icons.bubble_chart,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => HRRScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+              child: _buildTestCard(
+                title: "Mosaic Test",
+                icon: Icons.grid_on,
+                onPressed: () => _navigateTo(context, const mosaic()),
               ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: _buildTestCard(
+                title: "Lantern Test",
+                icon: Icons.circle,
+                onPressed: () => _navigateTo(context, const Lanterntest()),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.spaceMd),
+        SizedBox(
+          width: double.infinity,
+          child: _buildTestCard(
+            title: "HRR-Test",
+            icon: Icons.bubble_chart,
+            onPressed: () => _navigateTo(context, HRRScreen()),
+          ),
+        ),
+        const SizedBox(height: AppTheme.spaceMd),
+      ],
+    );
+  }
+
+  Widget _buildTabletLayout(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildTestCard(
+                title: "Ishihara-Test",
+                icon: Icons.remove_red_eye,
+                onPressed: () => _navigateTo(context, const IshiharaScreen()),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: _buildTestCard(
+                title: "D-15 Test",
+                icon: Icons.view_agenda,
+                onPressed: () => _navigateTo(context, D15TestScreen()),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: _buildTestCard(
+                title: "Mosaic Test",
+                icon: Icons.grid_on,
+                onPressed: () => _navigateTo(context, const mosaic()),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.spaceMd),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTestCard(
+                title: "Lantern Test",
+                icon: Icons.circle,
+                onPressed: () => _navigateTo(context, const Lanterntest()),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(
+              child: _buildTestCard(
+                title: "HRR-Test",
+                icon: Icons.bubble_chart,
+                onPressed: () => _navigateTo(context, HRRScreen()),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spaceMd),
+            Expanded(child: const SizedBox()), // Empty for balance
+          ],
+        ),
+        const SizedBox(height: AppTheme.spaceMd),
+      ],
+    );
+  }
+
+  Widget _buildTestCard({
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 140,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.softBlack,
+          foregroundColor: AppTheme.pureWhite,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          ),
+          padding: const EdgeInsets.all(AppTheme.spaceMd),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: AppTheme.pureWhite),
+            const SizedBox(height: AppTheme.spaceMd),
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppTheme.pureWhite,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
     );
   }
-}
 
-Widget testButton({
-  required String title,
-  required IconData icon,
-  required VoidCallback onPressed,
-}) {
-  return SizedBox(
-    height: 150,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 40, 50, 56),
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 42, color: Colors.white),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  void _navigateTo(BuildContext context, Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  }
 }

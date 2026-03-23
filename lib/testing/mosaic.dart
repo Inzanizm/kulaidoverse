@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class mosaic extends StatefulWidget {
@@ -130,7 +131,7 @@ class _mosaicState extends State<mosaic> with SingleTickerProviderStateMixin {
                         fontSize: 14,
                         fontWeight: FontWeight.normal,
                         height: 1.4,
-                        color: Colors.black87,
+                        color: AppTheme.pureBlack,
                       ),
                     ),
                   ),
@@ -612,7 +613,7 @@ class _mosaicState extends State<mosaic> with SingleTickerProviderStateMixin {
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
                 iconSize: 18,
-                icon: const Icon(Icons.info_outline, color: Colors.white),
+                icon: const Icon(Icons.info_outline, color: AppTheme.pureWhite),
                 onPressed: () {
                   showDialog(
                     context: context,

@@ -4,6 +4,7 @@ import 'package:kulaidoverse/learning/kulaiticle.dart';
 import 'package:kulaidoverse/testing/testing_screen.dart';
 import 'package:kulaidoverse/user_profile_screen.dart';
 import 'color_camera_screen.dart';
+import 'theme.dart';
 
 class HomeScreen extends StatelessWidget {
   final String? userName;
@@ -14,171 +15,150 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 360;
+    final crossAxisCount = size.width > 600 ? 4 : 2;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.pureWhite,
       body: SafeArea(
         child: Column(
           children: [
-            // 🔹 Top Bar
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+            // Unified App Bar
+            _buildAppBar(context),
+
+            const SizedBox(height: AppTheme.spaceLg),
+
+            // Dashboard Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceMd),
+                decoration: BoxDecoration(
+                  color: AppTheme.pureBlack,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    offset: Offset(0, 2),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Profile Picture - Now tappable
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => UserProfileScreen(
-                                userName: userName ?? 'User',
-                                avatarUrl: avatarUrl,
-                              ),
-                        ),
-                      );
-                    },
-                    child: CircleAvatar(
-                      radius: 22,
-                      backgroundImage:
-                          avatarUrl != null && avatarUrl!.isNotEmpty
-                              ? NetworkImage(avatarUrl!)
-                              : const AssetImage(
-                                    'assets/logo/default_avatar_icon.png',
-                                  )
-                                  as ImageProvider,
+                child: const Center(
+                  child: Text(
+                    'Dashboard',
+                    style: TextStyle(
+                      color: AppTheme.pureWhite,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
-                  ),
-
-                  // App Logo and Name - CENTERED
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          'assets/logo/kulaidoverse_logo.jpg',
-                          height: 32,
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'KULAIDOVERSE',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Empty space to balance the layout (same width as avatar)
-                  const SizedBox(width: 44), // 22 radius * 2 = 44
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // 🔹 Dashboard Header
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Center(
-                child: Text(
-                  'Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spaceLg),
 
-            // 🔹 Grid Dashboard Buttons
+            // Responsive Grid Dashboard
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spaceMd,
+                ),
                 child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 20,
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: AppTheme.spaceMd,
+                  crossAxisSpacing: AppTheme.spaceMd,
+                  childAspectRatio: isSmallScreen ? 0.9 : 1.0,
                   children: [
                     _buildDashboardCard(
                       icon: Icons.camera_alt_outlined,
                       label: 'Color Camera',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ColorCameraScreen(),
-                          ),
-                        );
-                      },
+                      onTap:
+                          () => _navigateTo(context, const ColorCameraScreen()),
                     ),
                     _buildDashboardCard(
                       icon: Icons.menu_book_outlined,
                       label: 'Learning',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const Kulaiticle()),
-                        );
-                      },
+                      onTap: () => _navigateTo(context, const Kulaiticle()),
                     ),
                     _buildDashboardCard(
                       icon: Icons.videogame_asset_outlined,
                       label: 'Games',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const GamesScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => _navigateTo(context, const GamesScreen()),
                     ),
                     _buildDashboardCard(
                       icon: Icons.checklist_rtl_outlined,
                       label: 'Testing',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const TestingScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => _navigateTo(context, const TestingScreen()),
                     ),
                   ],
                 ),
               ),
             ),
+
+            const SizedBox(height: AppTheme.spaceMd),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.pureWhite,
+        boxShadow: AppTheme.shadowLow,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spaceMd,
+        vertical: AppTheme.spaceSm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Profile Avatar
+          GestureDetector(
+            onTap:
+                () => _navigateTo(
+                  context,
+                  UserProfileScreen(
+                    userName: userName ?? 'User',
+                    avatarUrl: avatarUrl,
+                  ),
+                ),
+            child: Hero(
+              tag: 'userAvatar',
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.lightGrey, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppTheme.offWhite,
+                  backgroundImage:
+                      avatarUrl != null && avatarUrl!.isNotEmpty
+                          ? NetworkImage(avatarUrl!)
+                          : const AssetImage(
+                                'assets/logo/default_avatar_icon.png',
+                              )
+                              as ImageProvider,
+                ),
+              ),
+            ),
+          ),
+
+          // Center Logo & Title
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/logo/kulaidoverse_logo.jpg', height: 32),
+                const SizedBox(height: AppTheme.spaceXs),
+                const Text('KULAIDOVERSE', style: AppTheme.appName),
+              ],
+            ),
+          ),
+
+          // Balance spacer
+          const SizedBox(width: 48),
+        ],
       ),
     );
   }
@@ -186,38 +166,37 @@ class HomeScreen extends StatelessWidget {
   Widget _buildDashboardCard({
     required IconData icon,
     required String label,
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
+    return Material(
+      color: AppTheme.softBlack,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 50, color: Colors.white),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            boxShadow: AppTheme.shadowLow,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 48, color: AppTheme.pureWhite),
+              const SizedBox(height: AppTheme.spaceMd),
+              Text(
+                label,
+                style: AppTheme.cardTitle,
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _navigateTo(BuildContext context, Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 }

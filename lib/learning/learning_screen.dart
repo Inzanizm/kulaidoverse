@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:video_player/video_player.dart';
 import 'package:kulaidoverse/learning/article.dart';
 import 'article_detail.dart';
@@ -291,25 +292,30 @@ class _LearningScreenState extends State<LearningScreen> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-          borderRadius: BorderRadius.circular(16),
+          color: AppTheme.softBlack,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.school, size: 40),
-            const SizedBox(height: 10),
+            const Icon(Icons.school, size: 40, color: AppTheme.pureWhite),
+            const SizedBox(height: AppTheme.spaceMd),
             Text(
               article.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: AppTheme.pureWhite,
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppTheme.spaceXs),
             Text(
               article.subtitle,
-              style: const TextStyle(color: Colors.grey, fontSize: 11),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppTheme.lightGrey, fontSize: 11),
             ),
           ],
         ),

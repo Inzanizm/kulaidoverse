@@ -7,6 +7,7 @@ import 'package:kulaidoverse/login_screen.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
 import 'package:kulaidoverse/testing_results_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'theme.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
@@ -24,7 +25,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _signOut() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
-      // Ensure settings are synced before logout
       await _syncService.syncUserSettings(user.id);
     }
 
@@ -51,60 +51,53 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       builder:
           (context) => Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              padding: const EdgeInsets.all(AppTheme.spaceLg),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // App Logo
                   Image.asset('assets/logo/LogoKly.png', width: 80, height: 80),
-                  const SizedBox(height: 16),
-
-                  // App Name
+                  const SizedBox(height: AppTheme.spaceMd),
                   const Text(
                     'KULAIDOVERSE',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-
-                  // Version
                   const Text(
                     'Version 1.0',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    style: TextStyle(fontSize: 14, color: AppTheme.grey),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Developer Credits Title
+                  const SizedBox(height: AppTheme.spaceLg),
                   const Text(
                     'Developed By',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey,
+                      color: AppTheme.grey,
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Developer Names
+                  const SizedBox(height: AppTheme.spaceMd),
                   _buildDeveloperName('Ma. Romina Andrei Villones'),
                   _buildDeveloperName('Sean Stephan Miguel Sumugat'),
                   _buildDeveloperName('Ephraim John San Jose'),
                   _buildDeveloperName('John Louel Pulumbarit'),
-
-                  const SizedBox(height: 24),
-
-                  // Close Button
+                  const SizedBox(height: AppTheme.spaceLg),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppTheme.pureBlack,
+                        foregroundColor: AppTheme.pureWhite,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSmall,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppTheme.spaceMd,
+                        ),
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Close'),
@@ -119,7 +112,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildDeveloperName(String name) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceXs),
       child: Text(
         name,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
@@ -129,152 +122,183 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 360;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.pureWhite,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.pureWhite,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.pureBlack),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Profile',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppTheme.pureBlack,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
+        // FIX: Use LayoutBuilder with proper constraints instead of IntrinsicHeight
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal:
+                          isSmallScreen ? AppTheme.spaceMd : AppTheme.spaceLg,
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: AppTheme.spaceLg),
 
-              // Avatar
-              CircleAvatar(
-                radius: 60,
-                backgroundImage:
-                    widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
-                        ? NetworkImage(widget.avatarUrl!)
-                        : const AssetImage(
-                              'assets/logo/default_avatar_icon.png',
-                            )
-                            as ImageProvider,
-              ),
+                        // Avatar with Hero animation
+                        Hero(
+                          tag: 'userAvatar',
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.lightGrey,
+                                width: 3,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: isSmallScreen ? 50 : 60,
+                              backgroundColor: AppTheme.offWhite,
+                              backgroundImage:
+                                  widget.avatarUrl != null &&
+                                          widget.avatarUrl!.isNotEmpty
+                                      ? NetworkImage(widget.avatarUrl!)
+                                      : const AssetImage(
+                                            'assets/logo/default_avatar_icon.png',
+                                          )
+                                          as ImageProvider,
+                            ),
+                          ),
+                        ),
 
-              const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spaceMd),
 
-              // Full Name
-              Text(
-                widget.userName,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                        // User Info
+                        Text(
+                          widget.userName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppTheme.spaceXs),
+                        Text(
+                          Supabase.instance.client.auth.currentUser?.email ??
+                              '',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.grey,
+                          ),
+                        ),
+
+                        const SizedBox(height: AppTheme.spaceXl),
+
+                        // Menu Items - FIX: Removed Spacer, using SizedBox for spacing
+                        _buildMenuButton(
+                          icon: Icons.emoji_events_outlined,
+                          label: 'Game Stats',
+                          onTap: () => _navigateTo(const GameStatsScreen()),
+                        ),
+                        const SizedBox(height: AppTheme.spaceMd),
+                        _buildMenuButton(
+                          icon: Icons.history_outlined,
+                          label: 'Game History',
+                          onTap: () => _navigateTo(const GameHistoryScreen()),
+                        ),
+                        const SizedBox(height: AppTheme.spaceMd),
+                        _buildMenuButton(
+                          icon: Icons.assignment_outlined,
+                          label: 'Testing Results',
+                          onTap:
+                              () => _navigateTo(const TestingResultsScreen()),
+                        ),
+
+                        // FIX: Use Expanded instead of Spacer for proper flex behavior
+                        const Expanded(child: SizedBox()),
+
+                        // Bottom Actions
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.pureBlack,
+                              side: const BorderSide(color: AppTheme.pureBlack),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppTheme.spaceMd,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSmall,
+                                ),
+                              ),
+                            ),
+                            onPressed: _showCreditsDialog,
+                            icon: const Icon(Icons.info_outline),
+                            label: const Text(
+                              'Credits',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: AppTheme.spaceMd),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.pureBlack,
+                              foregroundColor: AppTheme.pureWhite,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppTheme.spaceMd,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSmall,
+                                ),
+                              ),
+                            ),
+                            onPressed: _signOut,
+                            icon: const Icon(Icons.logout),
+                            label: const Text(
+                              'Sign Out',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: AppTheme.spaceMd),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Email (optional)
-              Text(
-                Supabase.instance.client.auth.currentUser?.email ?? '',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Menu Buttons
-              _buildMenuButton(
-                icon: Icons.emoji_events_outlined,
-                label: 'Game Stats',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const GameStatsScreen()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildMenuButton(
-                icon: Icons.history_outlined,
-                label: 'Game History',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const GameHistoryScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildMenuButton(
-                icon: Icons.assignment_outlined,
-                label: 'Testing Results',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const TestingResultsScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const Spacer(),
-
-              // Credits Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.black),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: _showCreditsDialog,
-                  icon: const Icon(Icons.info_outline),
-                  label: const Text(
-                    'Credits',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: _signOut,
-                  icon: const Icon(Icons.logout),
-                  label: const Text(
-                    'Sign Out',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -286,25 +310,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0xFF2C2C2C),
-      borderRadius: BorderRadius.circular(16),
+      color: AppTheme.softBlack,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spaceMd,
+            vertical: AppTheme.spaceMd + 4,
+          ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white, size: 28),
-              const SizedBox(width: 16),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Icon(icon, color: AppTheme.pureWhite, size: 28),
+              const SizedBox(width: AppTheme.spaceMd),
+              Text(label, style: AppTheme.cardTitle),
               const Spacer(),
               const Icon(
                 Icons.arrow_forward_ios,
@@ -316,5 +336,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
     );
+  }
+
+  void _navigateTo(Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 }
