@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Lanterntest extends StatefulWidget {
@@ -325,7 +326,7 @@ class _LanterntestState extends State<Lanterntest> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -363,7 +364,7 @@ class _LanterntestState extends State<Lanterntest> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -401,7 +402,7 @@ class _LanterntestState extends State<Lanterntest> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -477,26 +478,35 @@ class _LanterntestState extends State<Lanterntest> {
                       const SizedBox(height: 24),
                       Row(
                         children: [
-                          const Text(
-                            "UP:",
-                            style: TextStyle(color: Colors.white),
+                          SizedBox(
+                            width: 60,
+                            child: const Text(
+                              "UP:",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
-                          const SizedBox(width: 10),
                           _colorButton("Red", true),
+                          const SizedBox(width: 4),
                           _colorButton("Green", true),
+                          const SizedBox(width: 4),
                           _colorButton("Blue", true),
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // DOWN Row - Aligned
                       Row(
                         children: [
-                          const Text(
-                            "DOWN:",
-                            style: TextStyle(color: Colors.white),
+                          SizedBox(
+                            width: 60,
+                            child: const Text(
+                              "DOWN:",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
-                          const SizedBox(width: 2),
                           _colorButton("Red", false),
+                          const SizedBox(width: 4),
                           _colorButton("Green", false),
+                          const SizedBox(width: 4),
                           _colorButton("Blue", false),
                         ],
                       ),
@@ -896,7 +906,7 @@ class _LanternResultScreenState extends State<LanternResultScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(

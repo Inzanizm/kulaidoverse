@@ -711,7 +711,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppTheme.softBlack,
+                    color: AppTheme.pureBlack,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: const Icon(
@@ -740,7 +740,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
               Container(
                 margin: EdgeInsets.only(right: AppTheme.spaceXs),
                 decoration: BoxDecoration(
-                  color: AppTheme.softBlack,
+                  color: AppTheme.pureBlack,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
                 child: IconButton(
@@ -775,7 +775,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.softBlack,
+                  color: AppTheme.pureBlack,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
                 child: IconButton(

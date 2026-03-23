@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
+import 'package:kulaidoverse/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HRRScreen extends StatefulWidget {
@@ -722,7 +723,7 @@ class _HRRScreenState extends State<HRRScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -1240,7 +1241,7 @@ class _HRRScreenState extends State<HRRScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -1278,7 +1279,7 @@ class _HRRScreenState extends State<HRRScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
@@ -1316,7 +1317,7 @@ class _HRRScreenState extends State<HRRScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF283238),
+                color: AppTheme.pureBlack,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(

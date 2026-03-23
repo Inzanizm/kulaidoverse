@@ -1,9 +1,9 @@
 // lib/testing/testing_screen.dart
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/theme.dart';
+import 'package:kulaidoverse/testing/d15men.dart';
 import 'lanterntest.dart';
 import 'ishihara.dart';
-import 'd15.dart';
 import 'hrr.dart';
 import 'mosaic.dart';
 
@@ -18,12 +18,53 @@ class TestingScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.pureWhite,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 6,
+        shadowColor: Colors.black.withOpacity(0.3),
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.softBlack,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        centerTitle: true,
+        title: Column(
+          children: [
+            Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+            const SizedBox(height: 4),
+            const Text(
+              "KULAIDOVERSE",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Unified App Bar (same style as HomeScreen)
-            _buildAppBar(context),
-
             const SizedBox(height: AppTheme.spaceLg),
 
             // Title Section
@@ -66,56 +107,6 @@ class TestingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.pureWhite,
-        boxShadow: AppTheme.shadowLow,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spaceMd,
-        vertical: AppTheme.spaceSm,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Back Button (square style like original, but using theme colors)
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.softBlack,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios,
-                color: AppTheme.pureWhite,
-                size: 18,
-              ),
-            ),
-          ),
-
-          // Center Logo & Title (same as HomeScreen)
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-                const SizedBox(height: AppTheme.spaceXs),
-                const Text("KULAIDOVERSE", style: AppTheme.appName),
-              ],
-            ),
-          ),
-
-          // Balance spacer (same width as back button)
-          const SizedBox(width: 40),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMobileLayout(BuildContext context) {
     return Column(
       children: [
@@ -133,7 +124,8 @@ class TestingScreen extends StatelessWidget {
               child: _buildTestCard(
                 title: "D-15 Test",
                 icon: Icons.view_agenda,
-                onPressed: () => _navigateTo(context, D15TestScreen()),
+                onPressed:
+                    () => _navigateTo(context, const D15TestMenuScreen()),
               ),
             ),
           ],
@@ -189,7 +181,8 @@ class TestingScreen extends StatelessWidget {
               child: _buildTestCard(
                 title: "D-15 Test",
                 icon: Icons.view_agenda,
-                onPressed: () => _navigateTo(context, D15TestScreen()),
+                onPressed:
+                    () => _navigateTo(context, const D15TestMenuScreen()),
               ),
             ),
             const SizedBox(width: AppTheme.spaceMd),
