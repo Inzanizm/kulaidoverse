@@ -1297,10 +1297,16 @@ class _HRRScreenState extends State<HRRScreen> {
                   showDialog(
                     context: context,
                     builder:
-                        (_) => const AlertDialog(
-                          title: Text("Tutorial:"),
-                          content: Text(
-                            "A colored plate with a hidden symbol will appear on the screen. Carefully observe the plate and select the symbol you see from the given options. If no symbol is visible, choose “No Symbol.” Continue until all plates are completed.",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/hrr_tutorial.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                   );

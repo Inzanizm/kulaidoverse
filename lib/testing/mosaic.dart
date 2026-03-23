@@ -578,10 +578,16 @@ class _mosaicState extends State<mosaic> with SingleTickerProviderStateMixin {
                   showDialog(
                     context: context,
                     builder:
-                        (_) => const AlertDialog(
-                          title: Text("Tutorial:"),
-                          content: Text(
-                            "A mosaic of colored tiles will be displayed. Identify the tile or pattern that looks different from the rest. Tap the tile that stands out to proceed to the next item.",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/mosaic_tutorial.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                   );

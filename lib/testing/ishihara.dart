@@ -939,10 +939,16 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
                   showDialog(
                     context: context,
                     builder:
-                        (_) => const AlertDialog(
-                          title: Text("Tutorial:"),
-                          content: Text(
-                            "A plate filled with colored dots will appear on the screen. A number is hidden within the pattern. Select the number you see from the choices. If you cannot see a number, choose “No Number.” Continue until all plates are completed.",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/ishihara_tutorial.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                   );

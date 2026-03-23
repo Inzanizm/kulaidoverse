@@ -382,10 +382,16 @@ class _LanterntestState extends State<Lanterntest> {
                   showDialog(
                     context: context,
                     builder:
-                        (_) => const AlertDialog(
-                          title: Text("Tutorial:"),
-                          content: Text(
-                            "A pair of colored lights will appear on the screen. Carefully observe the colors shown and select the correct color combination from the given options. Continue until all light pairs have been identified.",
+                        (_) => Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/game_logos/lantern_tutorial.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                   );
