@@ -126,16 +126,26 @@ class LocalDatabase {
     return maps.map((map) => GameHistory.fromMap(map)).toList();
   }
 
-  // Get all records for user (for history screen)
+  // Add this method to force initialization
+  Future<void> ensureInitialized() async {
+    await database; // This triggers _initDatabase()
+  }
+
+  // Update all query methods to handle errors better:
   Future<List<GameHistory>> getGameHistory(String userId) async {
-    final db = await database;
-    final maps = await db.query(
-      'game_history',
-      where: 'user_id = ?',
-      whereArgs: [userId],
-      orderBy: 'completed_at DESC',
-    );
-    return maps.map((map) => GameHistory.fromMap(map)).toList();
+    try {
+      final db = await database;
+      final maps = await db.query(
+        'game_history',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'completed_at DESC',
+      );
+      return maps.map((map) => GameHistory.fromMap(map)).toList();
+    } catch (e) {
+      print('Error getting game history: $e');
+      return []; // Return empty on error instead of crashing
+    }
   }
 
   // Mark records as synced
@@ -187,14 +197,19 @@ class LocalDatabase {
 
   // Get all test results for user
   Future<List<TestResult>> getTestResults(String userId) async {
-    final db = await database;
-    final maps = await db.query(
-      'test_results',
-      where: 'user_id = ?',
-      whereArgs: [userId],
-      orderBy: 'completed_at DESC',
-    );
-    return maps.map((map) => TestResult.fromMap(map)).toList();
+    try {
+      final db = await database;
+      final maps = await db.query(
+        'test_results',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'completed_at DESC',
+      );
+      return maps.map((map) => TestResult.fromMap(map)).toList();
+    } catch (e) {
+      print('Error getting test results: $e');
+      return [];
+    }
   }
 
   // Get test results by type
@@ -249,5 +264,22 @@ class LocalDatabase {
       settings,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  // Add to LocalDatabase class
+  Future<void> debugPrintAllData() async {
+    final db = await database;
+
+    final gameHistory = await db.query('game_history');
+    print('=== GAME HISTORY (${gameHistory.length} records) ===');
+    for (var row in gameHistory) {
+      print(row);
+    }
+
+    final testResults = await db.query('test_results');
+    print('=== TEST RESULTS (${testResults.length} records) ===');
+    for (var row in testResults) {
+      print(row);
+    }
   }
 }

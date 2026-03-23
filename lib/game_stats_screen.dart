@@ -90,6 +90,9 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
       return;
     }
 
+    // Ensure database is initialized first
+    await _localDb.ensureInitialized();
+
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     _isOnline = connectivityResult != ConnectivityResult.none;
@@ -98,7 +101,7 @@ class _GameStatsScreenState extends State<GameStatsScreen> {
       List<Map<String, dynamic>> results;
 
       if (_isOnline) {
-        // Online: Try to sync first, then fetch from Supabase
+        // Try to sync first, then fetch from Supabase
         try {
           await _syncService.syncPendingRecords(user.id);
         } catch (e) {

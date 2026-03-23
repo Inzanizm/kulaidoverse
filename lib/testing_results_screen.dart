@@ -61,6 +61,9 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
       return;
     }
 
+    // Ensure database is initialized
+    await _localDb.ensureInitialized();
+
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     _isOnline = connectivityResult != ConnectivityResult.none;
@@ -123,7 +126,13 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
     // Filter
     if (_selectedTestType != null && _selectedTestType != 'All') {
       _filteredResults =
-          _allResults.where((r) => r.testType == _selectedTestType).toList();
+          _allResults.where((r) {
+            // Handle D15 tests - check if test type starts with 'd15_'
+            if (_selectedTestType == 'd15') {
+              return r.testType.startsWith('d15_') || r.testType == 'd15';
+            }
+            return r.testType == _selectedTestType;
+          }).toList();
     } else {
       _filteredResults = List.from(_allResults);
     }
@@ -160,6 +169,13 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
   int get _totalPages => (_filteredResults.length / _itemsPerPage).ceil();
 
   String _formatTestType(String testType) {
+    // Handle D15 test types (d15_protan, d15_deutan, d15_tritan)
+    if (testType.startsWith('d15_')) {
+      final subtype = testType.substring(4); // Remove 'd15_' prefix
+      final formattedSubtype = subtype[0].toUpperCase() + subtype.substring(1);
+      return 'D15 $formattedSubtype';
+    }
+
     switch (testType) {
       case 'ishihara':
         return 'Ishihara Test';
@@ -565,7 +581,6 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (!result.isSynced)
@@ -574,11 +589,12 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
             ),
             const Divider(height: 20),
 
-            // Rating and Status Row
+            // Rating and Status Row - Adjusted widths
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Rating
-                Expanded(
+                Flexible(
+                  flex: 1,
                   child: _buildInfoRow(
                     'Rating',
                     '${result.overallRating.toStringAsFixed(1)}%',
@@ -586,12 +602,13 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                     Colors.black,
                   ),
                 ),
-                // Status
-                Expanded(
+                const SizedBox(width: 12),
+                Flexible(
+                  flex: 3,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
-                      vertical: 6,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.1),
@@ -603,7 +620,7 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                       children: [
                         Icon(Icons.circle, color: color, size: 10),
                         const SizedBox(width: 6),
-                        Flexible(
+                        Expanded(
                           child: Text(
                             result.overallStatus,
                             style: TextStyle(
@@ -611,7 +628,9 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
+                            maxLines: 3,
+                            overflow: TextOverflow.visible,
                           ),
                         ),
                       ],
@@ -622,7 +641,7 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Recommendation
+            // Recommendation - Full text, multi-line
             _buildInfoRow(
               'Recommendation',
               result.recommendation,
@@ -676,8 +695,9 @@ class _TestingResultsScreenState extends State<TestingResultsScreen> {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                softWrap: true, // Allow text to wrap
+                maxLines: 10, // Allow many lines (essentially unlimited)
+                overflow: TextOverflow.visible, // No ellipsis, show all text
               ),
             ],
           ),

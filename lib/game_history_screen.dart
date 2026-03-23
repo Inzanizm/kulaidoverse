@@ -67,6 +67,9 @@ class _GameHistoryScreenState extends State<GameHistoryScreen> {
       return;
     }
 
+    // Ensure database is initialized
+    await _localDb.ensureInitialized();
+
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     _isOnline = connectivityResult != ConnectivityResult.none;
