@@ -4,8 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:kulaidoverse/services/sync_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Enum must be in this file
+enum D15TestType { protan, deutan, tritan }
+
 class D15TestScreen extends StatefulWidget {
-  const D15TestScreen({super.key});
+  final D15TestType testType;
+
+  const D15TestScreen({
+    super.key,
+    required this.testType,
+  });
 
   @override
   State<D15TestScreen> createState() => _D15TestScreenState();
@@ -15,49 +23,111 @@ class _D15TestScreenState extends State<D15TestScreen> {
   bool isSaturated = true;
   Color? selectedColor;
 
-  final List<Color> capColors = [
-    const Color(0xFF923E31), // Cap 1 - Red
-    const Color(0xFFB24B28), // Cap 2
-    const Color(0xFFD05923), // Cap 3
-    const Color(0xFFDD701F), // Cap 4
-    const Color(0xFFE69818), // Cap 5 - Orange
-    const Color(0xFFF0B71C), // Cap 6
-    const Color(0xFFF6D022), // Cap 7 - Yellow
-    const Color(0xFFEED345), // Cap 8
-    const Color(0xFFC9D35E), // Cap 9
-    const Color(0xFFA6C47F), // Cap 10
-    const Color(0xFF8DB392), // Cap 11
-    const Color(0xFF7EB5A8), // Cap 12
-    const Color(0xFF5CA9A8), // Cap 13
-    const Color(0xFF467AAE), // Cap 14
-    const Color(0xFF533AAD), // Cap 15 - Blue/Violet
-  ];
+  // Protan Test Colors - 15 Monochromatic Red caps (NOT including reference)
+  // Reference is separate - these are the 15 caps user needs to arrange
+ // Protan Test Colors - 15 Muted Red caps (NOT including reference)
+// Desaturated, less bright red progression
+// Protan Test Colors - 15 Brighter Muted Red caps (NOT including reference)
+// Slightly more saturated but still not bright
+final List<Color> protanColors = [
+  const Color(0xFFF4C2C2), // Cap 1 - Brighter Light Pink
+  const Color(0xFFE8A8A8), // Cap 2 - Brighter Dusty Pink
+  const Color(0xFFDC9090), // Cap 3 - Brighter Muted Coral
+  const Color(0xFFD07878), // Cap 4 - Brighter Soft Salmon
+  const Color(0xFFC46060), // Cap 5 - Brighter Muted Light Red
+  const Color(0xFFB84848), // Cap 6 - Brighter Dusty Red
+  const Color(0xFFAC3030), // Cap 7 - Brighter Muted Red
+  const Color(0xFFA02020), // Cap 8 - Brighter Dark Muted Red
+  const Color(0xFF8C1818), // Cap 9 - Brighter Deep Muted Red
+  const Color(0xFF781010), // Cap 10 - Brighter Darker Muted Red
+  const Color(0xFF640C0C), // Cap 11 - Brighter Very Deep Muted
+  const Color(0xFF500808), // Cap 12 - Brighter Dark Muted
+  const Color(0xFF3C0404), // Cap 13 - Brighter Deep Dark Muted
+  const Color(0xFF2C0202), // Cap 14 - Brighter Very Dark Muted
+  const Color(0xFF1A0000), // Cap 15 - Brighter Deepest Muted Red
+];
 
-  // Fixed reference color (never changes)
-  final Color referenceColor = const Color.fromARGB(255, 131, 56, 44);
+// Deutan Test Colors - 15 Brighter Muted Green caps (NOT including reference)
+// Slightly more saturated but still not bright
+final List<Color> deutanColors = [
+  const Color(0xFFC2E8C2), // Cap 1 - Brighter Light Mint
+  const Color(0xFFA8DCA8), // Cap 2 - Brighter Dusty Mint
+  const Color(0xFF90D090), // Cap 3 - Brighter Muted Light Green
+  const Color(0xFF78C478), // Cap 4 - Brighter Soft Green
+  const Color(0xFF60B860), // Cap 5 - Brighter Muted Medium Green
+  const Color(0xFF48AC48), // Cap 6 - Brighter Dusty Green
+  const Color(0xFF30A030), // Cap 7 - Brighter Muted Green
+  const Color(0xFF209020), // Cap 8 - Brighter Dark Muted Green
+  const Color(0xFF188018), // Cap 9 - Brighter Deep Muted Green
+  const Color(0xFF107010), // Cap 10 - Brighter Darker Muted Green
+  const Color(0xFF0C600C), // Cap 11 - Brighter Very Deep Muted
+  const Color(0xFF085008), // Cap 12 - Brighter Dark Muted
+  const Color(0xFF044004), // Cap 13 - Brighter Deep Dark Muted
+  const Color(0xFF023002), // Cap 14 - Brighter Very Dark Muted
+  const Color(0xFF002000), // Cap 15 - Brighter Deepest Muted Green
+];
 
+// Tritan Test Colors - 15 Brighter Muted Blue caps (NOT including reference)
+// Slightly more saturated but still not bright
+final List<Color> tritanColors = [
+  const Color(0xFFC2D8F0), // Cap 1 - Brighter Light Sky
+  const Color(0xFFA8CCE8), // Cap 2 - Brighter Dusty Sky
+  const Color(0xFF90C0E0), // Cap 3 - Brighter Muted Light Blue
+  const Color(0xFF78B4D8), // Cap 4 - Brighter Soft Blue
+  const Color(0xFF60A8D0), // Cap 5 - Brighter Muted Medium Blue
+  const Color(0xFF489CC8), // Cap 6 - Brighter Dusty Blue
+  const Color(0xFF3090C0), // Cap 7 - Brighter Muted Blue
+  const Color(0xFF2080B0), // Cap 8 - Brighter Dark Muted Blue
+  const Color(0xFF1870A0), // Cap 9 - Brighter Deep Muted Blue
+  const Color(0xFF106090), // Cap 10 - Brighter Darker Muted Blue
+  const Color(0xFF0C5080), // Cap 11 - Brighter Very Deep Muted
+  const Color(0xFF084070), // Cap 12 - Brighter Dark Muted
+  const Color(0xFF043060), // Cap 13 - Brighter Deep Dark Muted
+  const Color(0xFF022050), // Cap 14 - Brighter Very Dark Muted
+  const Color(0xFF001040), // Cap 15 - Brighter Deepest Muted Blue
+];
+
+  late Color referenceColor;
+  late List<Color> capColors;
   late List<Color?> placedColors;
-  late List<Color> shuffledCaps; // Randomized order of caps to place
+  late List<Color> shuffledCaps;
 
   @override
   void initState() {
     super.initState();
+
+    // Set up colors based on test type
+   switch (widget.testType) {
+  case D15TestType.protan:
+    capColors = protanColors;
+    referenceColor = const Color(0xFFF8D8D8); // Brighter muted light pink
+    break;
+  case D15TestType.deutan:
+    capColors = deutanColors;
+    referenceColor = const Color(0xFFD8F8D8); // Brighter muted light mint
+    break;
+  case D15TestType.tritan:
+    capColors = tritanColors;
+    referenceColor = const Color(0xFFD8E8F8); // Brighter muted light sky
+    break;
+}
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+
     _initializeTest();
   }
 
   void _initializeTest() {
+    // 16 slots total: 1 reference + 15 caps
     placedColors = List<Color?>.filled(16, null);
-    placedColors[0] = referenceColor; // Reference always at position 0
+    placedColors[0] = referenceColor; // Reference at position 0
 
-    // Create shuffled list of cap colors (excluding reference)
+    // Shuffle the 15 caps (not the reference)
     shuffledCaps = List<Color>.from(capColors);
-    shuffledCaps.shuffle(
-      Random(),
-    ); // Only placement is randomized, colors stay the same
+    shuffledCaps.shuffle(Random());
   }
 
   @override
@@ -69,8 +139,789 @@ class _D15TestScreenState extends State<D15TestScreen> {
     super.dispose();
   }
 
-  // ADDED: Confirm exit dialog method
+  String get _testTitle {
+    switch (widget.testType) {
+      case D15TestType.protan:
+        return "Protan Test (Red Vision)";
+      case D15TestType.deutan:
+        return "Deutan Test (Green Vision)";
+      case D15TestType.tritan:
+        return "Tritan Test (Blue Vision)";
+    }
+  }
+
+  String get _testDescription {
+    switch (widget.testType) {
+      case D15TestType.protan:
+        return "Arrange 15 caps from light pink to deep maroon";
+      case D15TestType.deutan:
+        return "Arrange 15 caps from light mint to deep forest";
+      case D15TestType.tritan:
+        return "Arrange 15 caps from light sky to deep navy";
+    }
+  }
+
   void _confirmExitTest() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Center(
+                child: Text(
+                  "Quit Test?",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Text(
+                  "Are you sure you want to quit?\nYour current progress will be lost.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
+                    height: 1.4,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "Quit",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _applyMode(Color color) {
+    if (isSaturated) return color;
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withSaturation(0.2).toColor();
+  }
+
+  int _getCapNumber(Color color) {
+    if (color == referenceColor) return 0;
+    int index = capColors.indexOf(color);
+    if (index != -1) return index + 1; // Returns 1-15 for the 15 caps
+    return -1;
+  }
+
+  void _selectColor(Color color) {
+    setState(() {
+      if (selectedColor == color) {
+        selectedColor = null;
+      } else {
+        selectedColor = color;
+      }
+    });
+  }
+
+  void _placeColor(int index) {
+    if (index == 0) return; // Can't place in reference slot
+
+    setState(() {
+      if (selectedColor != null) {
+        // Remove from previous position if already placed
+        for (int i = 1; i < placedColors.length; i++) {
+          if (placedColors[i] == selectedColor) {
+            placedColors[i] = null;
+          }
+        }
+        // Place or remove from current slot
+        if (placedColors[index] == selectedColor) {
+          placedColors[index] = null;
+        } else {
+          placedColors[index] = selectedColor;
+        }
+        selectedColor = null;
+      } else {
+        // If no color selected, clear this slot
+        placedColors[index] = null;
+      }
+    });
+  }
+
+  Map<String, dynamic> _calculateResults() {
+    Map<int, int> capToPosition = {};
+    capToPosition[0] = 0; // Reference is always at position 0
+
+    // Map placed caps to their positions (1-15)
+    for (int pos = 1; pos < 16; pos++) {
+      if (placedColors[pos] != null) {
+        int capNum = _getCapNumber(placedColors[pos]!);
+        if (capNum != -1) {
+          capToPosition[capNum] = pos;
+        }
+      }
+    }
+
+    // Check if all 15 caps are placed
+    if (capToPosition.length < 16) { // 0 (reference) + 15 caps
+      return {'complete': false, 'placedCount': capToPosition.length - 1};
+    }
+
+    int totalError = 0;
+    List<int> misplacedCaps = [];
+
+    // Check if caps 1-15 are in correct positions 1-15
+    for (int cap = 1; cap <= 15; cap++) {
+      int expectedPos = cap;
+      int actualPos = capToPosition[cap]!;
+
+      if (actualPos != expectedPos) {
+        totalError++;
+        misplacedCaps.add(cap);
+      }
+    }
+
+    int totalCrossings = _calculateCrossings(capToPosition);
+
+   String severity;
+Color severityColor;        // Changed from diagnosisColor to severityColor
+Color diagnosisColor;       // New variable for diagnosis
+
+if (totalError <= 2) {
+  severity = "Normal";
+  severityColor = const Color.fromARGB(255, 0, 0, 0);                    // White for severity
+  diagnosisColor = Colors.black;                   // Black for diagnosis
+} else if (totalError <= 5) {
+  severity = "Mild Deficiency";
+  severityColor = const Color.fromARGB(255, 0, 0, 0);
+  diagnosisColor = Colors.black;
+} else if (totalError <= 10) {
+  severity = "Moderate Deficiency";
+  severityColor = const Color.fromARGB(255, 0, 0, 0);
+  diagnosisColor = Colors.black;
+} else {
+  severity = "Severe Deficiency";
+  severityColor = const Color.fromARGB(255, 0, 0, 0);
+  diagnosisColor = Colors.black;
+}
+
+    String specificDiagnosis;
+    switch (widget.testType) {
+      case D15TestType.protan:
+        specificDiagnosis = totalError <= 2
+            ? "Normal Red Vision"
+            : "Protanomaly (Red Deficiency) - $severity";
+        break;
+      case D15TestType.deutan:
+        specificDiagnosis = totalError <= 2
+            ? "Normal Green Vision"
+            : "Deuteranomaly (Green Deficiency) - $severity";
+        break;
+      case D15TestType.tritan:
+        specificDiagnosis = totalError <= 2
+            ? "Normal Blue Vision"
+            : "Tritanomaly (Blue Deficiency) - $severity";
+        break;
+    }
+
+    return {
+      'complete': true,
+      'totalError': totalError,
+      'totalCrossings': totalCrossings,
+      'capToPosition': capToPosition,
+      'misplacedCaps': misplacedCaps,
+      'diagnosis': specificDiagnosis,
+      'diagnosisColor': diagnosisColor,
+      'severity': severity,
+      'testType': widget.testType,
+    };
+  }
+
+  int _calculateCrossings(Map<int, int> capToPosition) {
+    int crossings = 0;
+
+    // Check crossings for caps 0-14 (reference + 14 caps)
+    for (int i = 0; i < 15; i++) {
+      int a = capToPosition[i]!;
+      int b = capToPosition[i + 1]!;
+
+      for (int j = i + 2; j < 15; j++) {
+        int c = capToPosition[j]!;
+        int d = capToPosition[j + 1]!;
+
+        if (_segmentsCross(a, b, c, d)) {
+          crossings++;
+        }
+      }
+    }
+
+    return crossings;
+  }
+
+  bool _segmentsCross(int a, int b, int c, int d) {
+    if (a > b) {
+      int temp = a;
+      a = b;
+      b = temp;
+    }
+    if (c > d) {
+      int temp = c;
+      c = d;
+      d = temp;
+    }
+
+    return (a < c && c < b && b < d) || (c < a && a < d && d < b);
+  }
+
+  void _showResults() {
+    final results = _calculateResults();
+
+    if (!(results['complete'] ?? false)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Center(
+            child: Text(
+              "Please place all ${15 - (results['placedCount'] ?? 0)} remaining caps first",
+              textAlign: TextAlign.center,
+            ),
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => D15ResultsScreen(
+          totalError: results['totalError'] as int,
+          totalCrossings: results['totalCrossings'] as int,
+          diagnosis: results['diagnosis'] as String,
+          diagnosisColor: results['diagnosisColor'] as Color,
+          severity: results['severity'] as String,
+          testType: widget.testType,
+          capToPosition: results['capToPosition'] as Map<int, int>,
+          onRestart: () {
+            Navigator.pop(context);
+            SystemChrome.setPreferredOrientations([
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ]);
+            setState(() {
+              placedColors = List<Color?>.filled(16, null);
+              placedColors[0] = referenceColor;
+              selectedColor = null;
+              shuffledCaps.shuffle(Random());
+            });
+          },
+          onQuit: () {
+            SystemChrome.setPreferredOrientations([
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ]);
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+    final fontSize = (width + height) / 80;
+
+    // Fixed cap size that works well in landscape
+    const double capSize = 36.0;
+
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _confirmExitTest();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF2E3035),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withOpacity(0.3),
+          leading: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: _confirmExitTest,
+              ),
+            ),
+          ),
+          centerTitle: true,
+          title: Column(
+            children: [
+              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
+              const SizedBox(height: 4),
+              Text(
+                _testTitle.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            const SizedBox(width: 4),
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.question_mark, color: Colors.white),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text("Tutorial: $_testTitle"),
+                      content: Text(
+                        "A reference color and 15 colored caps will appear. Select the caps in order to arrange them into a smooth color sequence starting from the reference. ${_testDescription}.",
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF283238),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                iconSize: 18,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  String testSpecificInfo;
+                  switch (widget.testType) {
+                    case D15TestType.protan:
+                      testSpecificInfo = "This test evaluates your ability to distinguish between 15 red hues from light pink to deep maroon.";
+                      break;
+                    case D15TestType.deutan:
+                      testSpecificInfo = "This test evaluates your ability to distinguish between 15 green hues from light mint to deep forest.";
+                      break;
+                    case D15TestType.tritan:
+                      testSpecificInfo = "This test evaluates your ability to distinguish between 15 blue hues from light sky to deep navy.";
+                      break;
+                  }
+
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Disclaimer and Purpose"),
+                      content: Text(
+                        "Disclaimer:\n"
+                        "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis.\n\n"
+                        "Purpose:\n"
+                        "$testSpecificInfo",
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _testDescription,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: fontSize + 4,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _modeButton("Saturated", true, fontSize),
+                      const SizedBox(width: 16),
+                      _modeButton("Desaturated", false, fontSize),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Available caps row - 15 shuffled caps (not including reference)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Select caps (${shuffledCaps.length - placedColors.where((c) => c != null && c != referenceColor).length} remaining):",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: shuffledCaps.map((color) {
+                              final isPlaced = placedColors.contains(color);
+                              final displayColor = _applyMode(color);
+                              final isSelected = selectedColor == color;
+
+                              if (isPlaced) {
+                                return const SizedBox.shrink();
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: GestureDetector(
+                                  onTap: () => _selectColor(color),
+                                  child: Container(
+                                    width: capSize,
+                                    height: capSize,
+                                    decoration: BoxDecoration(
+                                      color: displayColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected ? Colors.blue : Colors.black,
+                                        width: isSelected ? 3 : 1.5,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.blue.withOpacity(0.5),
+                                                blurRadius: 6,
+                                                spreadRadius: 2,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Placement slots row - 16 slots (1 reference + 15 caps)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Arrange here (Ref + 15 caps):",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(16, (index) {
+                              final isReference = index == 0;
+                              final hasColor = placedColors[index] != null;
+                              final isEmptySlot = !isReference && !hasColor && selectedColor != null;
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: GestureDetector(
+                                  onTap: () => _placeColor(index),
+                                  child: Container(
+                                    width: capSize,
+                                    height: capSize,
+                                    decoration: BoxDecoration(
+                                      color: _applyMode(
+                                        placedColors[index] ??
+                                            (isReference
+                                                ? referenceColor
+                                                : const Color.fromARGB(
+                                                    255,
+                                                    240,
+                                                    240,
+                                                    240,
+                                                  )),
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isEmptySlot ? Colors.blue : Colors.black,
+                                        width: isEmptySlot ? 3 : 1.5,
+                                      ),
+                                      boxShadow: isEmptySlot
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.blue.withOpacity(0.3),
+                                                blurRadius: 6,
+                                                spreadRadius: 1,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: isReference
+                                        ? const Center(
+                                            child: Text(
+                                              "REF",
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            placedColors = List<Color?>.filled(16, null);
+                            placedColors[0] = referenceColor;
+                            selectedColor = null;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: fontSize * 4,
+                            vertical: fontSize * 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Restart",
+                          style: TextStyle(fontSize: fontSize),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: _showResults,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: fontSize * 4,
+                            vertical: fontSize * 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Results",
+                          style: TextStyle(fontSize: fontSize),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modeButton(String text, bool value, double fontSize) {
+    final isActive = isSaturated == value;
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          isSaturated = value;
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isActive ? Colors.white : Colors.grey[700],
+        foregroundColor: isActive ? Colors.black : Colors.white,
+      ),
+      child: Text(text, style: TextStyle(fontSize: fontSize)),
+    );
+  }
+}
+
+// Results Screen
+class D15ResultsScreen extends StatefulWidget {
+  final int totalError;
+  final int totalCrossings;
+  final String diagnosis;
+  final Color diagnosisColor;
+  final String severity;
+  final D15TestType testType;
+  final Map<int, int> capToPosition;
+  final VoidCallback onRestart;
+  final VoidCallback onQuit;
+
+  const D15ResultsScreen({
+    super.key,
+    required this.totalError,
+    required this.totalCrossings,
+    required this.diagnosis,
+    required this.diagnosisColor,
+    required this.severity,
+    required this.testType,
+    required this.capToPosition,
+    required this.onRestart,
+    required this.onQuit,
+  });
+
+  @override
+  State<D15ResultsScreen> createState() => _D15ResultsScreenState();
+}
+
+class _D15ResultsScreenState extends State<D15ResultsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _saveTestResult();
+  }
+
+
+void _confirmExitTest() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -144,6 +995,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
                             ),
                           ),
                           onPressed: () => Navigator.pop(context),
+
                           child: const Text(
                             "Cancel",
                             style: TextStyle(
@@ -163,251 +1015,32 @@ class _D15TestScreenState extends State<D15TestScreen> {
     );
   }
 
-  Color _applyMode(Color color) {
-    if (isSaturated) return color;
-    final hsl = HSLColor.fromColor(color);
-    return hsl.withSaturation(0.2).toColor();
-  }
 
-  int _getCapNumber(Color color) {
-    if (color == referenceColor) return 0;
-    int index = capColors.indexOf(color); // Use capColors instead of baseColors
-    if (index != -1) return index + 1;
-    return -1;
-  }
 
-  void _selectColor(Color color) {
-    setState(() {
-      if (selectedColor == color) {
-        selectedColor = null;
-      } else {
-        selectedColor = color;
-      }
-    });
-  }
 
-  void _placeColor(int index) {
-    if (index == 0) return;
-
-    setState(() {
-      if (selectedColor != null) {
-        for (int i = 1; i < placedColors.length; i++) {
-          if (placedColors[i] == selectedColor) {
-            placedColors[i] = null;
-          }
-        }
-        if (placedColors[index] == selectedColor) {
-          placedColors[index] = null;
-        } else {
-          placedColors[index] = selectedColor;
-        }
-        selectedColor = null;
-      } else {
-        placedColors[index] = null;
-      }
-    });
-  }
-
-  Map<String, dynamic> _calculateResults() {
-    Map<int, int> capToPosition = {};
-    capToPosition[0] = 0;
-
-    for (int pos = 1; pos < 16; pos++) {
-      if (placedColors[pos] != null) {
-        int capNum = _getCapNumber(placedColors[pos]!);
-        if (capNum != -1) {
-          capToPosition[capNum] = pos;
-        }
-      }
+  String get _testTypeLabel {
+    switch (widget.testType) {
+      case D15TestType.protan:
+        return "Protan (Red)";
+      case D15TestType.deutan:
+        return "Deutan (Green)";
+      case D15TestType.tritan:
+        return "Tritan (Blue)";
     }
-
-    if (capToPosition.length < 16) {
-      return {'complete': false, 'placedCount': capToPosition.length - 1};
-    }
-
-    // Count only misplaced caps (caps not in their correct position)
-    int totalError = 0;
-    List<int> misplacedCaps = [];
-
-    for (int cap = 1; cap <= 15; cap++) {
-      int expectedPos = cap; // Cap N should be at position N
-      int actualPos = capToPosition[cap]!;
-
-      // If cap is not at expected position, it's an error
-      if (actualPos != expectedPos) {
-        totalError++;
-        misplacedCaps.add(cap);
-      }
-    }
-
-    int totalCrossings = _calculateCrossings(capToPosition);
-
-    // Calculate errors by color region based on misplaced caps
-    int protanErrors = 0;
-    int deutanErrors = 0;
-    int tritanErrors = 0;
-
-    for (int cap in misplacedCaps) {
-      if (cap <= 5)
-        protanErrors++; // Red-orange region (caps 1-5)
-      else if (cap <= 10)
-        deutanErrors++; // Yellow-green region (caps 6-10)
-      else
-        tritanErrors++; // Blue-green/blue region (caps 11-15)
-    }
-
-    String diagnosis;
-    Color diagnosisColor;
-
-    if (totalError <= 2) {
-      diagnosis = "Normal Color Vision";
-      diagnosisColor = Colors.green;
-    } else if (protanErrors > deutanErrors && protanErrors > tritanErrors) {
-      diagnosis = "Protanomaly (Red Deficiency)";
-      diagnosisColor = Colors.red;
-    } else if (deutanErrors > protanErrors && deutanErrors > tritanErrors) {
-      diagnosis = "Deuteranomaly (Green Deficiency)";
-      diagnosisColor = Colors.green;
-    } else if (tritanErrors > protanErrors && tritanErrors > deutanErrors) {
-      diagnosis = "Tritanomaly (Blue Deficiency)";
-      diagnosisColor = Colors.blue;
-    } else {
-      diagnosis = "Possible Color Vision Deficiency";
-      diagnosisColor = Colors.orange;
-    }
-
-    return {
-      'complete': true,
-      'totalError': totalError,
-      'totalCrossings': totalCrossings,
-      'capToPosition': capToPosition,
-      'misplacedCaps': misplacedCaps,
-      'diagnosis': diagnosis,
-      'diagnosisColor': diagnosisColor,
-      'protanErrors': protanErrors,
-      'deutanErrors': deutanErrors,
-      'tritanErrors': tritanErrors,
-    };
-  }
-
-  int _calculateCrossings(Map<int, int> capToPosition) {
-    int crossings = 0;
-
-    for (int i = 0; i < 15; i++) {
-      int a = capToPosition[i]!;
-      int b = capToPosition[i + 1]!;
-
-      for (int j = i + 2; j < 15; j++) {
-        int c = capToPosition[j]!;
-        int d = capToPosition[j + 1]!;
-
-        if (_segmentsCross(a, b, c, d)) {
-          crossings++;
-        }
-      }
-    }
-
-    return crossings;
-  }
-
-  bool _segmentsCross(int a, int b, int c, int d) {
-    if (a > b) {
-      int temp = a;
-      a = b;
-      b = temp;
-    }
-    if (c > d) {
-      int temp = c;
-      c = d;
-      d = temp;
-    }
-
-    return (a < c && c < b && b < d) || (c < a && a < d && d < b);
-  }
-
-  void _showResults() {
-    final results = _calculateResults();
-
-    if (!(results['complete'] ?? false)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-            // ADDED: Center widget
-            child: Text(
-              "Please place all ${15 - (results['placedCount'] ?? 0)} remaining colors first",
-              textAlign: TextAlign.center, // ADDED: text align center
-            ),
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // ... rest of the method remains the same
-
-    // Force portrait for results
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => D15ResultsScreen(
-              totalError: results['totalError'] as int,
-              totalCrossings: results['totalCrossings'] as int,
-              diagnosis: results['diagnosis'] as String,
-              diagnosisColor: results['diagnosisColor'] as Color,
-              protanErrors: results['protanErrors'] as int,
-              deutanErrors: results['deutanErrors'] as int,
-              tritanErrors: results['tritanErrors'] as int,
-              capToPosition: results['capToPosition'] as Map<int, int>,
-              onRestart: () {
-                Navigator.pop(context);
-                // Return to landscape for test
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.landscapeRight,
-                ]);
-                setState(() {
-                  placedColors = List<Color?>.filled(16, null);
-                  placedColors[0] = referenceColor;
-                  selectedColor = null;
-                });
-              },
-              onQuit: () {
-                // Return to landscape when quitting
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.landscapeRight,
-                ]);
-                Navigator.pop(context);
-              },
-            ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
-    final fontSize = (width + height) / 80;
-
     return PopScope<Object?>(
-      // Add generic type <Object?>
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {
-        // New callback with result parameter
         if (didPop) return;
-        _confirmExitTest();
+        Navigator.pop(context);
+        Navigator.pop(context);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF2E3035),
-        appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 6,
           shadowColor: Colors.black.withOpacity(0.3),
@@ -452,9 +1085,8 @@ class _D15TestScreenState extends State<D15TestScreen> {
           ),
           actions: [
             const SizedBox(width: 4),
-            // INFO BUTTON ONLY - Settings removed
             Container(
-              margin: const EdgeInsets.only(right: 8), // Changed from symmetric
+              margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 color: const Color(0xFF283238),
                 borderRadius: BorderRadius.circular(8),
@@ -466,24 +1098,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
                   ),
                 ],
               ),
-              child: IconButton(
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                iconSize: 18,
-                icon: const Icon(Icons.question_mark, color: Colors.white),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder:
-                        (_) => const AlertDialog(
-                          title: Text("Tutorial:"),
-                          content: Text(
-                            "A reference color and several colored tiles will appear on the screen. Select the tiles in order to arrange them into a smooth color sequence starting from the reference color. Continue selecting until all colors are arranged.",
-                          ),
-                        ),
-                  );
-                },
-              ),
+              
             ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -510,372 +1125,7 @@ class _D15TestScreenState extends State<D15TestScreen> {
                         (_) => const AlertDialog(
                           title: Text("Disclaimer and Purpose"),
                           content: Text(
-                            "Disclaimer:\n"
-                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
-                            "Purpose:\n"
-                            "The Farnsworth D-15 Test evaluates a user's ability to arrange colored caps in the correct hue sequence. By analyzing how the colors are ordered, the test helps identify the presence, type, and possible severity of color vision deficiency, particularly red–green and blue–yellow defects.",
-                          ),
-                        ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
-                    "Arrange the colors in smooth transition order from red to blue",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: fontSize + 4,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _modeButton("Saturated", true, fontSize),
-                      const SizedBox(width: 16),
-                      _modeButton("Desaturated", false, fontSize),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children:
-                                  shuffledCaps.map((color) {
-                                    final isPlaced = placedColors.contains(
-                                      color,
-                                    );
-                                    final displayColor = _applyMode(color);
-                                    final isSelected = selectedColor == color;
-
-                                    if (isPlaced) {
-                                      return const SizedBox(
-                                        width: 0,
-                                        height: 0,
-                                      );
-                                    }
-
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                      ),
-                                      child: GestureDetector(
-                                        onTap: () => _selectColor(color),
-                                        child: Container(
-                                          width: fontSize * 2.16,
-                                          height: fontSize * 2.16,
-                                          decoration: BoxDecoration(
-                                            color: displayColor,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color:
-                                                  isSelected
-                                                      ? Colors.blue
-                                                      : Colors.black,
-                                              width: isSelected ? 4 : 1.5,
-                                            ),
-                                            boxShadow:
-                                                isSelected
-                                                    ? [
-                                                      BoxShadow(
-                                                        color: Colors.blue
-                                                            .withOpacity(0.5),
-                                                        blurRadius: 8,
-                                                        spreadRadius: 2,
-                                                      ),
-                                                    ]
-                                                    : null,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 14,
-                          alignment: WrapAlignment.center,
-                          children: List.generate(16, (index) {
-                            final isReference = index == 0;
-                            final hasColor = placedColors[index] != null;
-                            final isEmptySlot =
-                                !isReference &&
-                                !hasColor &&
-                                selectedColor != null;
-
-                            return GestureDetector(
-                              onTap: () => _placeColor(index),
-                              child: Container(
-                                width: fontSize * 2.16,
-                                height: fontSize * 2.16,
-                                decoration: BoxDecoration(
-                                  color: _applyMode(
-                                    placedColors[index] ??
-                                        (isReference
-                                            ? referenceColor
-                                            : const Color.fromARGB(
-                                              255,
-                                              241,
-                                              234,
-                                              234,
-                                            )),
-                                  ),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color:
-                                        isEmptySlot
-                                            ? Colors.blue
-                                            : Colors.black,
-                                    width: isEmptySlot ? 3 : 1.5,
-                                  ),
-                                  boxShadow:
-                                      isEmptySlot
-                                          ? [
-                                            BoxShadow(
-                                              color: Colors.blue.withOpacity(
-                                                0.3,
-                                              ),
-                                              blurRadius: 6,
-                                              spreadRadius: 1,
-                                            ),
-                                          ]
-                                          : null,
-                                ),
-                                child:
-                                    isReference
-                                        ? const Center(
-                                          child: Text(
-                                            "REF",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        )
-                                        : null,
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            placedColors = List<Color?>.filled(16, null);
-                            placedColors[0] = referenceColor;
-                            selectedColor = null;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: fontSize * 4,
-                            vertical: fontSize * 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Restart",
-                          style: TextStyle(fontSize: fontSize),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: _showResults,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: fontSize * 4,
-                            vertical: fontSize * 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Results",
-                          style: TextStyle(fontSize: fontSize),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _modeButton(String text, bool value, double fontSize) {
-    final isActive = isSaturated == value;
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          isSaturated = value;
-          // Don't reshuffle when changing mode, just update display
-        });
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isActive ? Colors.white : Colors.grey[700],
-        foregroundColor: isActive ? Colors.black : Colors.white,
-      ),
-      child: Text(text, style: TextStyle(fontSize: fontSize)),
-    );
-  }
-}
-
-// Results Screen - Portrait orientation with WillPopCallback
-class D15ResultsScreen extends StatefulWidget {
-  final int totalError;
-  final int totalCrossings;
-  final String diagnosis;
-  final Color diagnosisColor;
-  final int protanErrors;
-  final int deutanErrors;
-  final int tritanErrors;
-  final Map<int, int> capToPosition;
-  final VoidCallback onRestart;
-  final VoidCallback onQuit;
-
-  const D15ResultsScreen({
-    super.key,
-    required this.totalError,
-    required this.totalCrossings,
-    required this.diagnosis,
-    required this.diagnosisColor,
-    required this.protanErrors,
-    required this.deutanErrors,
-    required this.tritanErrors,
-    required this.capToPosition,
-    required this.onRestart,
-    required this.onQuit,
-  });
-
-  @override
-  State<D15ResultsScreen> createState() => _D15ResultsScreenState();
-}
-
-class _D15ResultsScreenState extends State<D15ResultsScreen> {
-  String _getSeverityFromErrors(int errors) {
-    if (errors == 0) return 'Normal';
-    if (errors <= 1) return 'Mild';
-    if (errors <= 3) return 'Moderate';
-    return 'Severe';
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _saveTestResult(); // Auto-save when results screen opens
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    String protanStatus = _getSeverityFromErrors(widget.protanErrors);
-    String deutanStatus = _getSeverityFromErrors(widget.deutanErrors);
-    String tritanStatus = _getSeverityFromErrors(widget.tritanErrors);
-
-    return PopScope<Object?>(
-      // Add generic type <Object?>
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        // New callback with result parameter
-        if (didPop) return;
-        Navigator.pop(context);
-        Navigator.pop(context);
-      },
-      child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
-          elevation: 6,
-          shadowColor: Colors.black.withOpacity(0.3),
-          centerTitle: true,
-          title: Column(
-            children: [
-              Image.asset('assets/logo/LogoKly.png', width: 28, height: 28),
-              const SizedBox(height: 4),
-              const Text(
-                "KULAIDOVERSE",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            const SizedBox(width: 4),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF283238),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.14),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                iconSize: 18,
-                icon: const Icon(Icons.info_outline, color: Colors.white),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder:
-                        (_) => const AlertDialog(
-                          title: Text("Disclaimer and Purpose"),
-                          content: Text(
-                            "Disclaimer:\n"
-                            "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis. Results may vary depending on device display, brightness, and lighting conditions. For an accurate assessment, please consult a qualified eye care professional or ophthalmologist.\n\n"
-                            "Purpose:\n"
-                            "The Farnsworth D-15 Test evaluates a user's ability to arrange colored caps in the correct hue sequence. By analyzing how the colors are ordered, the test helps identify the presence, type, and possible severity of color vision deficiency, particularly red–green and blue–yellow defects.",
+                           "The color vision tests in KulaidoVerse are for screening and educational purposes only and are not intended to provide a medical diagnosis.",
                           ),
                         ),
                   );
@@ -891,12 +1141,12 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
-                const Align(
+                Align(
                   alignment: Alignment.center,
                   child: Text(
-                    "Your D15 Color Vision Test Results",
+                    "$_testTypeLabel Test Results",
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color.fromARGB(255, 0, 0, 0),
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -904,8 +1154,6 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-
-                // Circular visualization - smaller for portrait
                 SizedBox(
                   width: 250,
                   height: 250,
@@ -916,10 +1164,7 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
-                // Results Table
                 Card(
                   color: const Color(0xFF3A3F4B),
                   shape: RoundedRectangleBorder(
@@ -927,193 +1172,153 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                   ),
                   elevation: 4,
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Table(
-                      border: TableBorder.all(color: Colors.white24, width: 1),
-                      columnWidths: const {
-                        0: FlexColumnWidth(3),
-                        1: FlexColumnWidth(2),
-                        2: FlexColumnWidth(2),
-                      },
-                      defaultVerticalAlignment:
-                          TableCellVerticalAlignment.middle,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       children: [
-                        const TableRow(
-                          decoration: BoxDecoration(color: Color(0xFF2F3238)),
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: Text(
-                                "Test Type",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: Text(
-                                "Errors",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: Text(
-                                "Status",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Protan row
-                        TableRow(
-                          decoration: const BoxDecoration(
-                            color: Color.fromARGB(255, 237, 238, 238),
+                        Text(
+                          "Test Type: $_testTypeLabel",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                "Red Region (Protan)",
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                "${widget.protanErrors}",
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                protanStatus,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          textAlign: TextAlign.center,
                         ),
-                        // Deutan row
-                        TableRow(
-                          decoration: const BoxDecoration(
-                            color: Color.fromARGB(255, 229, 229, 230),
-                          ),
+                        const SizedBox(height: 12),
+                        Table(
+                          border: TableBorder.all(color: Colors.white24, width: 1),
+                          columnWidths: const {
+                            0: FlexColumnWidth(2),
+                            1: FlexColumnWidth(2),
+                          },
+                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                "Green Region (Deutan)",
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
+                            const TableRow(
+                              decoration: BoxDecoration(color: Color(0xFF2F3238)),
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: Text(
+                                    "Metric",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: Text(
+                                    "Value",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
+                            TableRow(
+                              decoration: const BoxDecoration(
+                                color: Color.fromARGB(255, 237, 238, 238),
                               ),
-                              child: Text(
-                                "${widget.deutanErrors}",
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    "Total Errors",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    "${widget.totalError}",
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
+                            TableRow(
+                              decoration: const BoxDecoration(
+                                color: Color.fromARGB(255, 229, 229, 230),
                               ),
-                              child: Text(
-                                deutanStatus,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontWeight: FontWeight.bold,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    "Total Crossings",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    "${widget.totalCrossings}",
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        // Tritan row
-                        TableRow(
-                          decoration: const BoxDecoration(
-                            color: Color.fromARGB(255, 237, 238, 238),
-                          ),
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
+                            TableRow(
+                              decoration: const BoxDecoration(
+                                color: Color.fromARGB(255, 237, 238, 238),
                               ),
-                              child: Text(
-                                "Blue Region (Tritan)",
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    "Severity",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                "${widget.tritanErrors}",
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontSize: 16,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    widget.severity,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: widget.diagnosisColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                tritanStatus,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -1121,10 +1326,7 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Summary Box
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -1136,30 +1338,10 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        "Rating: ${(100 - ((widget.totalError / 15) * 100)).toStringAsFixed(0)}%",
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Total Crossings: ${widget.totalCrossings}",
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
                         widget.diagnosis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -1185,10 +1367,7 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Buttons
                 Row(
                   children: [
                     Expanded(
@@ -1215,11 +1394,11 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          // Return to landscape when quitting
                           SystemChrome.setPreferredOrientations([
                             DeviceOrientation.landscapeLeft,
                             DeviceOrientation.landscapeRight,
                           ]);
+                          Navigator.pop(context);
                           Navigator.pop(context);
                           Navigator.pop(context);
                         },
@@ -1247,9 +1426,9 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
 
   String _getRecommendation(int totalError) {
     if (totalError <= 2) {
-      return 'Normal color vision. No restrictions.';
+      return 'Normal color vision in this region. No restrictions.';
     } else if (totalError <= 5) {
-      return 'Mild deficiency. Monitor for changes.';
+      return 'Mild deficiency detected. Monitor for changes.';
     } else if (totalError <= 10) {
       return 'Moderate deficiency. May have difficulty with color-critical tasks.';
     } else {
@@ -1264,18 +1443,15 @@ class _D15ResultsScreenState extends State<D15ResultsScreen> {
     final syncService = SyncService();
 
     final rating = (100 - ((widget.totalError / 15) * 100));
-    final status = widget.diagnosis;
-    final recommendation = _getRecommendation(widget.totalError);
+    final testTypeString = 'd15_${widget.testType.name}';
 
     await syncService.saveTestResult(
       userId: user.id,
-      testType: 'd15',
+      testType: testTypeString,
       overallRating: rating,
-      overallStatus: status,
-      recommendation: recommendation,
+      overallStatus: widget.diagnosis,
+      recommendation: _getRecommendation(widget.totalError),
     );
-
-    print('Test saved! Rating: $rating%, Status: $status');
   }
 }
 
@@ -1303,18 +1479,16 @@ class D15ResultsPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width * 0.38;
 
-    final circlePaint =
-        Paint()
-          ..color = Colors.black
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
+    final circlePaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
 
     canvas.drawCircle(center, radius, circlePaint);
 
-    final dotPaint =
-        Paint()
-          ..color = Colors.black
-          ..style = PaintingStyle.fill;
+    final dotPaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
 
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -1346,11 +1520,10 @@ class D15ResultsPainter extends CustomPainter {
       );
     }
 
-    final linePaint =
-        Paint()
-          ..color = diagnosisColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3;
+    final linePaint = Paint()
+      ..color = diagnosisColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
 
     for (int cap = 0; cap < 15; cap++) {
       int? fromPos = capToPosition[cap];
@@ -1363,16 +1536,14 @@ class D15ResultsPainter extends CustomPainter {
       }
     }
 
-    final capDotPaint =
-        Paint()
-          ..color = diagnosisColor
-          ..style = PaintingStyle.fill;
+    final capDotPaint = Paint()
+      ..color = diagnosisColor
+      ..style = PaintingStyle.fill;
 
-    final capBorderPaint =
-        Paint()
-          ..color = Colors.black
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1;
+    final capBorderPaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
 
     for (int cap = 0; cap <= 15; cap++) {
       int? pos = capToPosition[cap];

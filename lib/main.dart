@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kulaidoverse/auth_gate.dart';
+import 'package:kulaidoverse/home_screen.dart';
 import 'package:kulaidoverse/services/local_database.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'KulaidoVerse',
       debugShowCheckedModeBanner: false,
-      home: const AuthGate(),
+      home: const HomeScreen(),
     );
   }
 }

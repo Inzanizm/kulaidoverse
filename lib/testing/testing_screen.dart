@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kulaidoverse/testing/d15men.dart';
 import 'lanterntest.dart';
 import 'ishihara.dart';
-import 'd15.dart';
+import 'd15men.dart';
 import 'hrr.dart';
 import 'mosaic.dart';
 
@@ -94,12 +95,10 @@ class TestingScreen extends StatelessWidget {
                             title: "D-15 Test",
                             icon: Icons.view_agenda,
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => D15TestScreen(),
-                                ),
-                              );
+                             Navigator.push(
+  context,
+  MaterialPageRoute(builder: (_) => const D15TestMenuScreen()),
+);
                             },
                           ),
                         ),
