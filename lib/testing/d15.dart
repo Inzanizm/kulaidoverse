@@ -906,11 +906,133 @@ class _D15TestScreenState extends State<D15TestScreen> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          setState(() {
-                            placedColors = List<Color?>.filled(16, null);
-                            placedColors[0] = referenceColor;
-                            selectedColor = null;
-                          });
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder:
+                                (_) => Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 360,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          const Center(
+                                            child: Text(
+                                              "Restart Test?",
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Center(
+                                            child: Text(
+                                              "Are you sure you want to restart?\nYour current progress will be lost.",
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.normal,
+                                                height: 1.4,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.white,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 14,
+                                                        ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    setState(() {
+                                                      placedColors =
+                                                          List<Color?>.filled(
+                                                            16,
+                                                            null,
+                                                          );
+                                                      placedColors[0] =
+                                                          referenceColor;
+                                                      selectedColor = null;
+                                                      shuffledCaps.shuffle(
+                                                        Random(),
+                                                      );
+                                                    });
+                                                  },
+                                                  child: const Text(
+                                                    "Restart",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.black,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 14,
+                                                        ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  onPressed:
+                                                      () => Navigator.pop(
+                                                        context,
+                                                      ),
+                                                  child: const Text(
+                                                    "Cancel",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
