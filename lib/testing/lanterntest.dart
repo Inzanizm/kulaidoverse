@@ -84,7 +84,11 @@ class _LanterntestState extends State<Lanterntest> {
               (_) => LanternResultScreen(
                 stages: stages,
                 userAnswers: userAnswers,
-                onRestart: _restartTest,
+                onRestart: () {
+                  // Pop the result screen first, then restart
+                  Navigator.pop(context);
+                  _restartTest();
+                },
                 onQuit: () => Navigator.pop(context),
               ),
         ),

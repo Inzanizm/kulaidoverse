@@ -156,6 +156,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
             title: "Quit Test?",
             message:
                 "Are you sure you want to quit?\nYour current progress will be lost.",
+            confirmButtonText: "Quit", // Add this
             onConfirm: () {
               Navigator.pop(context);
               Navigator.pop(context);
@@ -174,6 +175,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
             title: "Restart Test?",
             message:
                 "Are you sure you want to restart the test?\nAll progress will be reset.",
+            confirmButtonText: "Restart", // Add this
             onConfirm: () {
               Navigator.pop(context);
               _resetTest();
@@ -640,7 +642,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _confirmRestartTest,
+                              onPressed: _resetTest,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.softBlack,
                                 foregroundColor: AppTheme.pureWhite,
@@ -872,6 +874,7 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
   Widget _buildConfirmDialog({
     required String title,
     required String message,
+    required String confirmButtonText, // Add this parameter
     required VoidCallback onConfirm,
     required VoidCallback onCancel,
   }) {
@@ -916,9 +919,10 @@ class _IshiharaScreenState extends State<IshiharaScreen> {
                       ),
                     ),
                     onPressed: onConfirm,
-                    child: const Text(
-                      "Quit",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    child: Text(
+                      // Change from const Text to Text
+                      confirmButtonText, // Use the parameter
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
